@@ -1,0 +1,762 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "ProductionOrder-Operations-Api",
+    "version": "v1"
+  },
+  "paths": {
+    "/v1/operations/changeaddress": {
+      "put": {
+        "tags": [
+          "Operations"
+        ],
+        "operationId": "Operations_ChangeAddress",
+        "consumes": [
+          "application/json",
+          "text/json",
+          "application/*+json",
+          "application/xml",
+          "text/xml",
+          "application/*+xml",
+          "text/yaml"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "schema": {
+              "$ref": "#/definitions/ChangeAddressCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ChangeAddressProductionOrders"
+            ]
+          }
+        ]
+      }
+    },
+    "/v1/operations/reprocess": {
+      "post": {
+        "tags": [
+          "Operations"
+        ],
+        "operationId": "Operations_Reprocess",
+        "consumes": [
+          "application/json",
+          "text/json",
+          "application/*+json",
+          "application/xml",
+          "text/xml",
+          "application/*+xml",
+          "text/yaml"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "schema": {
+              "$ref": "#/definitions/ReprocessCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ReprocessProductionOrders"
+            ]
+          }
+        ]
+      }
+    },
+    "/v1/operations/cancelfulfillment": {
+      "delete": {
+        "tags": [
+          "Operations"
+        ],
+        "operationId": "Operations_CancelFulfillment",
+        "consumes": [
+          "application/json",
+          "text/json",
+          "application/*+json",
+          "application/xml",
+          "text/xml",
+          "application/*+xml",
+          "text/yaml"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "schema": {
+              "$ref": "#/definitions/CancelFulfillmentCommand"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "CancelProductionOrders"
+            ]
+          }
+        ]
+      }
+    },
+    "/v1/productionorders": {
+      "post": {
+        "tags": [
+          "ProductionOrders"
+        ],
+        "operationId": "ProductionOrders_Create",
+        "consumes": [
+          "application/json",
+          "text/json",
+          "application/*+json",
+          "application/xml",
+          "text/xml",
+          "application/*+xml",
+          "text/yaml"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "schema": {
+              "$ref": "#/definitions/CreateProductionOrdersCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "CreateProductionOrders"
+            ]
+          }
+        ]
+      }
+    },
+    "/v1/productionorders/{id}": {
+      "delete": {
+        "tags": [
+          "ProductionOrders"
+        ],
+        "operationId": "ProductionOrders_Cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "CancelProductionOrders"
+            ]
+          }
+        ]
+      }
+    },
+    "/v1/routingrules": {
+      "get": {
+        "tags": [
+          "RoutingRules"
+        ],
+        "operationId": "RoutingRules_Get",
+        "produces": [
+          "text/yaml"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "type": "string"
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ReadRoutingRules"
+            ]
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "RoutingRules"
+        ],
+        "operationId": "RoutingRules_Put",
+        "consumes": [
+          "text/yaml"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "WriteRoutingRules"
+            ]
+          }
+        ]
+      }
+    },
+    "/v1/testcontext": {
+      "get": {
+        "tags": [
+          "TestContext"
+        ],
+        "operationId": "TestContext_GetTestContext",
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/GetTestContextResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "TestContextRead"
+            ]
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "TestContext"
+        ],
+        "operationId": "TestContext_PutTestContext",
+        "consumes": [
+          "application/json",
+          "text/json",
+          "application/*+json",
+          "application/xml",
+          "text/xml",
+          "application/*+xml",
+          "text/yaml"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "schema": {
+              "$ref": "#/definitions/UpdateTestContextCommand"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "TestContextWrite"
+            ]
+          }
+        ]
+      }
+    },
+    "/v1/virtualplantdecision/{orderCode}": {
+      "get": {
+        "tags": [
+          "VirtualPlantDecision"
+        ],
+        "operationId": "VirtualPlantDecision_GetVirtualPlantDecision",
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderCode",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/GetVirtualPlantDecisionResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ReadVirtualPlantDecision"
+            ]
+          }
+        ]
+      }
+    },
+    "/v1/virtualplantdecision/latest/{orderCode}": {
+      "get": {
+        "tags": [
+          "VirtualPlantDecision"
+        ],
+        "operationId": "VirtualPlantDecision_GetLatestVirtualPlantDecision",
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderCode",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/GetLatestVirtualPlantDecisionResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ReadVirtualPlantDecision"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "Address": {
+      "type": "object",
+      "properties": {
+        "customerNameTitle": {
+          "type": "string"
+        },
+        "customerFirstName": {
+          "type": "string"
+        },
+        "customerNamePrefix": {
+          "type": "string"
+        },
+        "customerLastName": {
+          "type": "string"
+        },
+        "companyName": {
+          "type": "string"
+        },
+        "addressLine1": {
+          "type": "string"
+        },
+        "addressLine2": {
+          "type": "string"
+        },
+        "city": {
+          "type": "string"
+        },
+        "zipCode": {
+          "type": "string"
+        },
+        "country": {
+          "type": "string"
+        },
+        "customerPhone": {
+          "type": "string"
+        },
+        "customerEmail": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "CancelFulfillmentCommand": {
+      "type": "object",
+      "properties": {
+        "channelName": {
+          "type": "string"
+        },
+        "orderCode": {
+          "type": "string"
+        },
+        "products": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProductToCancel"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "ChangeAddressCommand": {
+      "type": "object",
+      "properties": {
+        "orderCode": {
+          "type": "string"
+        },
+        "deliveryAddress": {
+          "$ref": "#/definitions/DeliveryAddress"
+        }
+      },
+      "additionalProperties": false
+    },
+    "CopyItem": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "customerMustReceiveBy": {
+          "format": "date-time",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "CreateProductionOrdersCommand": {
+      "required": [
+        "order"
+      ],
+      "type": "object",
+      "properties": {
+        "order": {
+          "$ref": "#/definitions/Order"
+        }
+      },
+      "additionalProperties": false
+    },
+    "DeliveryAddress": {
+      "type": "object",
+      "properties": {
+        "companyName": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "addressLine1": {
+          "type": "string"
+        },
+        "addressLine2": {
+          "type": "string"
+        },
+        "city": {
+          "type": "string"
+        },
+        "countryId": {
+          "type": "string"
+        },
+        "zipCode": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "firstName": {
+          "type": "string"
+        },
+        "prefix": {
+          "type": "string"
+        },
+        "lastName": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "GetLatestVirtualPlantDecisionResponse": {
+      "type": "object",
+      "properties": {
+        "virtualPlants": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "GetTestContextResponse": {
+      "type": "object",
+      "properties": {
+        "routingRules": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "GetVirtualPlantDecisionResponse": {
+      "type": "object",
+      "properties": {
+        "virtualPlantDecisionEvents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/VirtualPlantDecisionEvent"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "Order": {
+      "type": "object",
+      "properties": {
+        "channelName": {
+          "type": "string"
+        },
+        "vendorCode": {
+          "type": "string"
+        },
+        "brand": {
+          "type": "string"
+        },
+        "locale": {
+          "type": "string"
+        },
+        "channelType": {
+          "type": "string"
+        },
+        "orderCode": {
+          "type": "string"
+        },
+        "approvedForProductionDate": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "shipments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Shipment"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "Product": {
+      "type": "object",
+      "properties": {
+        "isCreatedByProductApi": {
+          "type": "boolean"
+        },
+        "productContentCode": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "articleType": {
+          "type": "string"
+        },
+        "copyItems": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CopyItem"
+          }
+        },
+        "options": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "ProductToCancel": {
+      "type": "object",
+      "properties": {
+        "productCode": {
+          "type": "string"
+        },
+        "newAmount": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "copyItemCodes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "ReprocessCommand": {
+      "required": [
+        "order",
+        "reprocessReason"
+      ],
+      "type": "object",
+      "properties": {
+        "order": {
+          "$ref": "#/definitions/Order"
+        },
+        "comment": {
+          "type": "string"
+        },
+        "causedBy": {
+          "type": "string"
+        },
+        "reprocessReason": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Shipment": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "$ref": "#/definitions/Address"
+        },
+        "billingAddress": {
+          "$ref": "#/definitions/Address"
+        },
+        "info": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "customerMustReceiveBy": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "carrierName": {
+          "type": "string"
+        },
+        "deliveryMethod": {
+          "type": "string"
+        },
+        "deliveryType": {
+          "type": "string"
+        },
+        "products": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Product"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "UpdateTestContextCommand": {
+      "type": "object",
+      "properties": {
+        "routingRules": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "VirtualPlantDecisionEvent": {
+      "type": "object",
+      "properties": {
+        "orderCode": {
+          "type": "string"
+        },
+        "productCodes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "operationType": {
+          "type": "string"
+        },
+        "virtualPlant": {
+          "type": "string"
+        },
+        "createdAt": {
+          "format": "date-time",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "securityDefinitions": {
+    "oauth2": {
+      "type": "oauth2",
+      "flow": "implicit",
+      "authorizationUrl": "https://t-dtap.login.albelli.com/v2/connect/authorize",
+      "scopes": {
+        "productionorder.operations.create": "create production orders",
+        "productionorder.operations.reprocess": "reprocess production orders",
+        "productionorder.operations.cancel": "cancel production orders",
+        "productionorder.operations.changeaddress": "change address for production orders",
+        "productionorder.operations.virtualplantdecision.read": "read virtual plant decision",
+        "productionorder.operations.routing.read": "read routing rules",
+        "productionorder.operations.routing.write": "change routing rules",
+        "testcontext.read": "test context read routing rules",
+        "testcontext.write": "test context write routing rules"
+      }
+    }
+  }
+}

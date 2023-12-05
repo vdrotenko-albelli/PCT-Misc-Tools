@@ -1,0 +1,2 @@
+@echo off
+CALL ESLogDumpCsv2RequestStatsBulk_worker.cmd F:\home\vmdrot\EPAM\Projs\PTBX-NDC\JIRA\PCT-10048\ESLogs\eslogs.txt F:\home\vmdrot\EPAM\Projs\PTBX-NDC\JIRA\PCT-10048\ESLogs\all_urls_dump.txt -SkipLogo

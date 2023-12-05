@@ -1,0 +1,2 @@
+@echo off
+CALL ReadESLogDumpCsv_worker.cmd F:\home\vmdrot\EPAM\Projs\PTBX-NDC\JIRA\PCT-10048\On_demand_report_2023-10-24T17_26_59.006Z_895784f0-7292-11ee-9fc5-350285b2a09e.csv 14 "_source.Albelli\.Correlation\.Http\.Server\.Url" 

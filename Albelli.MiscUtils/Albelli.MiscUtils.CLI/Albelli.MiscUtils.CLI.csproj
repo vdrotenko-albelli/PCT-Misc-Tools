@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Albelli.MiscUtils.Lib\Albelli.MiscUtils.Lib.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Albelli.CustomerCare.Backoffice.Models">
+      <HintPath>D:\git\PTBX-NDC\srcs\Customer-Backoffice\src\Albelli.CustomerCare\Albelli.CustomerCare.Backoffice\bin\Debug\net6.0\Albelli.CustomerCare.Backoffice.Models.dll</HintPath>
+    </Reference>
+    <Reference Include="Albelli.CustomerCare.Models.Elastic">
+      <HintPath>D:\git\PTBX-NDC\srcs\Customer-Backoffice\src\Albelli.CustomerCare\Albelli.CustomerCare.Backoffice\bin\Debug\net6.0\Albelli.CustomerCare.Models.Elastic.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

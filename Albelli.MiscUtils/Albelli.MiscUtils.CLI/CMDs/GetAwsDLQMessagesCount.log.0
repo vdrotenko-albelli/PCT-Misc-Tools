@@ -1,0 +1,381 @@
+{
+    "QueueUrls": [
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/AlarmNotifications-sns-dlq",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Albelli-ChangeAddress-AddressChanger",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Albelli-ChangeAddress-AddressChanger-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-DelayReport-DelayReporter",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-DelayReport-DelayReporter-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-DeliveryProcessor-DeliveryEvent",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-DeliveryProcessor-DeliveryEvent-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-DeliveryProcessor-ElandersDeliveryEvent-Received",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-DeliveryProcessor-ElandersDeliveryEvent-Received-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-DeliveryTracking-Shipment",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-DeliveryTracking-Shipment-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-DeliveryUpdated",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-DeliveryUpdated-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Elanders-AddressChanger-AddressChanged",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Elanders-AddressChanger-AddressChanged-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Elanders-NotificationProcessor-Notification-Received",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Elanders-NotificationProcessor-Notification-Received-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Elanders-OrderCanceller-CancelOrder",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Elanders-OrderCanceller-CancelOrder-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Elanders-OrderPlacer-PlaceOrder",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Elanders-OrderPlacer-PlaceOrder-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-IntakeProcessor-Request-Received",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-IntakeProcessor-Request-Received-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-IntakeProcessor-Request-Received-ManualCheck",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-IntakeProcessor-RouteProducts",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-IntakeProcessor-RouteProducts-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-IntakeProcessor-RouteProducts-ManualTest",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Mcp-CancelRequestReceived",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Mcp-CancelRequestReceived-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Mcp-CreateRequestReceived",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Mcp-CreateRequestReceived-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-RRD-AddressChange",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-RRD-AddressChange-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-RRD-TicketCancellation",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-RRD-TicketCancellation-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-RRD-TicketCreation",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-RRD-TicketCreation-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-ScenarioRunner-Test-Requested",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-ScenarioRunner-Test-Requested-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-ShipmentCalculator-PlantUsage-Status-Changed-Out",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-ShipmentCalculator-PlantUsage-Status-Changed-Out-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-StatusChanged-V1",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-StatusChanged-V1-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-StatusChanged-V2",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-StatusChanged-V2-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-StatusChanged-V3",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-StatusChanged-V3-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-StatusChanged-manual-check",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-StatusChanged-manual-check-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-StatusLogger-PersistCopyItemLogBatch",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-StatusLogger-PersistCopyItemLogBatch-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-StatusLogger-PersistProductionUnitLogBatch",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-StatusLogger-PersistProductionUnitLogBatch-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Symphony-AddressChanger-ChangeAddress",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Symphony-AddressChanger-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Symphony-Notifications-Processor-Status-Changed",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Symphony-Notifications-Processor-Status-Changed-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Symphony-OrderCanceller-CancelOrder",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Symphony-OrderCanceller-CancelOrder-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Symphony-OrderPlacer-PlaceOrder",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Symphony-OrderPlacer-PlaceOrder-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-ColdStorage-Restore-Completed",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-ColdStorage-Restore-Completed-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-DocumentRetrievalFinished",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-DocumentRetrievalFinished-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-OrderDeliveryReady-BHI",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-OrderDeliveryReady-BHI-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-OrderDeliveryReady-ELA",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-OrderDeliveryReady-ELA-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-OrderDeliveryReady-KIS",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-OrderDeliveryReady-KIS-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-OrderDeliveryReady-NLH",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-OrderDeliveryReady-NLH-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-OrderDeliveryReady-RRD",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-OrderDeliveryReady-RRD-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-OrderDeliveryReady-SYM",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-OrderDeliveryReady-SYM-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-OrderDeliveryReady-YPB",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-OrderDeliveryReady-YPB-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-PlantUpdated",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-PlantUpdated-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-Product-Finalized",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-Product-Finalized-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-ProductFinalized-V2",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-ProductFinalized-V2-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-ProductsReady",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-ProductsReady-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-TryCreateTickets",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-TryCreateTickets-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketMover-MoveTickets-Requested",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketMover-MoveTickets-Requested-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/LambdaTimeoutAlarmCreator-event-dlq",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/LambdaTimeoutAlarmCreator-migration-dlq",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Localization-ScenarioRunner-Test-Requested",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Localization-ScenarioRunner-Test-Requested-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Martijn-Demo-Sns-Encryption-Queue",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Martijn-Demo-Sns-Encryption-Queue-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Martijn-Test-Experimental.fifo",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Mcp-ScenarioRunner-Test-Requested",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Mcp-ScenarioRunner-Test-Requested-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Mcp-StatusUpdater-UpdateStatus",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Mcp-StatusUpdater-UpdateStatus-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Mcp-iWays-OrderCanceller-Cancel",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Mcp-iWays-OrderCanceller-Cancel-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Mcp-iWays-OrderCreator-Create",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Mcp-iWays-OrderCreator-Create-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Mcp-iWays-ReceiveStatus",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Mcp-iWays-ReceiveStatus-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Mcp-iWays-StatusForwarder-Input-DLQ.fifo",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Mcp-iWays-StatusForwarder-Input.fifo",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Monitoring-Ecs-EventsDetector-EventReceived",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Monitoring-Ecs-EventsDetector-EventReceived-Dlq",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Monitoring-Sqs-QueueOverflow-Alert-Input",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Monitoring-Sqs-QueueOverflow-Alert-Input-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Prepress-Imposition-Service-JobReady-BHI",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Prepress-Imposition-Service-JobReady-BHI-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Prepress-Imposition-Service-JobReady-KIS",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Prepress-Imposition-Service-JobReady-KIS-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Prepress-Imposition-Service-JobReady-NLH",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Prepress-Imposition-Service-JobReady-NLH-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Prepress-Imposition-Service-JobReady-YPB",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Prepress-Imposition-Service-JobReady-YPB-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Prepress-PhoenixAdapter-Imposition-Service-JobProcessed",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Prepress-PhoenixAdapter-Imposition-Service-JobProcessed-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Prepress-PrintQueueThrottler-ProcessJob-Requested-NLH",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Prepress-PrintQueueThrottler-ProcessJob-Requested-NLH-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Prepress-ScenarioRunner-Test-Requested",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Prepress-ScenarioRunner-Test-Requested-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Product-Pdf-Validation-Api-ScenarioRunner-Test-Requested",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Product-Pdf-Validation-Api-ScenarioRunner-Test-Requested-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Production-Scheduling-ScenarioRunner-Test-Requested",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Production-Scheduling-ScenarioRunner-Test-Requested-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Production-Tracking-DelayDetector-OrderBrokenPromiseCheck-NLH",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Production-Tracking-DelayDetector-OrderBrokenPromiseCheck-NLH-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Production-Tracking-DelayDetector-OrderBrokenPromiseCheck-YPB",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Production-Tracking-DelayDetector-OrderBrokenPromiseCheck-YPB-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Production-Tracking-DelayDetector-OrderDelayCheck-NLH",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Production-Tracking-DelayDetector-OrderDelayCheck-NLH-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Production-Tracking-DelayDetector-OrderDelayCheck-YPB",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Production-Tracking-DelayDetector-OrderDelayCheck-YPB-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Production-Tracking-ScenarioRunner-Test-Requested",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Production-Tracking-ScenarioRunner-Test-Requested-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-AddressChanger-ChangeAddress",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-AddressChanger-ChangeAddress-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-Canceller-Cancel",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-Canceller-Cancel-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-Creator-Create",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-Creator-Create-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-Reprocessor-Reprocess",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-Reprocessor-Reprocess-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-ResourceFileProcessor-DocumentRetrievalFinished",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-ResourceFileProcessor-DocumentRetrievalFinished-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-ScenarioRunner-Test-Requested",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-ScenarioRunner-Test-Requested-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-iWays-Cancel",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-iWays-Cancel-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-iWays-CancelTestOrder-DLQ.fifo",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-iWays-CancelTestOrder.fifo",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-iWays-ChangeAddress",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-iWays-ChangeAddress-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-iWays-CreateOrder",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-iWays-CreateOrder-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-iWays-CreateOrder-ManualCheck",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-iWays-NotifyProduction",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-iWays-NotifyProduction-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-iWays-StatusReceiver-Forwarder-Input-DLQ.fifo",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-iWays-StatusReceiver-Forwarder-Input.fifo",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-iWays-StatusReceiver-Input-DLQ.fifo",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-iWays-StatusReceiver-Input.fifo",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Shipping-Centiro-ScenarioRunner-Test-Requested",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Shipping-Centiro-ScenarioRunner-Test-Requested-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Shipping-ScenarioRunner-Test-Requested",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Shipping-ScenarioRunner-Test-Requested-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Shipping-ViperIntake-Received",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Shipping-ViperIntake-Received-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Testing-ScenarioRunner-Test-Requested",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Testing-ScenarioRunner-Test-Requested-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Testing-SnsInterceptor-InterceptMessage-DLQ-Group1",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Testing-SnsInterceptor-InterceptMessage-DLQ-Group2",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Testing-SnsInterceptor-InterceptMessage-DLQ-Group3",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Testing-SnsInterceptor-InterceptMessage-DLQ.fifo",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Testing-SnsInterceptor-InterceptMessage-Group1",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Testing-SnsInterceptor-InterceptMessage-Group2",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Testing-SnsInterceptor-InterceptMessage-Group3",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Testing-SnsInterceptor-InterceptMessage.fifo",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Testing-TestReportsProcessor-ProcessTestReports",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Testing-TestReportsProcessor-ProcessTestReports-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Testing-TestResultUpdater-TestCompleted",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Testing-TestResultUpdater-TestCompleted-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/TraceId-Experimental-Queue",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Virtual-Plant-ScenarioRunner-Test-Requested",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Virtual-Plant-ScenarioRunner-Test-Requested-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Virtual-Plant-Ui-ScenarioRunner-Test-Requested",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/Virtual-Plant-Ui-ScenarioRunner-Test-Requested-DLQ",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/messageQueue",
+        "https://sqs.eu-west-1.amazonaws.com/223296927953/phoenix-adapter-local"
+    ]
+}
+
+https://sqs.eu-west-1.amazonaws.com/223296927953/AlarmNotifications-sns-dlq:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Albelli-ChangeAddress-AddressChanger:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Albelli-ChangeAddress-AddressChanger-DLQ:1
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-DelayReport-DelayReporter:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-DelayReport-DelayReporter-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-DeliveryProcessor-DeliveryEvent:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-DeliveryProcessor-DeliveryEvent-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-DeliveryProcessor-ElandersDeliveryEvent-Received:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-DeliveryProcessor-ElandersDeliveryEvent-Received-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-DeliveryTracking-Shipment:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-DeliveryTracking-Shipment-DLQ:190
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-DeliveryUpdated:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-DeliveryUpdated-DLQ:40
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Elanders-AddressChanger-AddressChanged:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Elanders-AddressChanger-AddressChanged-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Elanders-NotificationProcessor-Notification-Received:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Elanders-NotificationProcessor-Notification-Received-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Elanders-OrderCanceller-CancelOrder:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Elanders-OrderCanceller-CancelOrder-DLQ:40
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Elanders-OrderPlacer-PlaceOrder:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Elanders-OrderPlacer-PlaceOrder-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-IntakeProcessor-Request-Received:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-IntakeProcessor-Request-Received-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-IntakeProcessor-Request-Received-ManualCheck:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-IntakeProcessor-RouteProducts:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-IntakeProcessor-RouteProducts-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-IntakeProcessor-RouteProducts-ManualTest:70
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Mcp-CancelRequestReceived:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Mcp-CancelRequestReceived-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Mcp-CreateRequestReceived:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Mcp-CreateRequestReceived-DLQ:80
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-RRD-AddressChange:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-RRD-AddressChange-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-RRD-TicketCancellation:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-RRD-TicketCancellation-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-RRD-TicketCreation:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-RRD-TicketCreation-DLQ:100
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-ScenarioRunner-Test-Requested:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-ScenarioRunner-Test-Requested-DLQ:4
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-ShipmentCalculator-PlantUsage-Status-Changed-Out:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-ShipmentCalculator-PlantUsage-Status-Changed-Out-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-StatusChanged-V1:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-StatusChanged-V1-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-StatusChanged-V2:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-StatusChanged-V2-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-StatusChanged-V3:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-StatusChanged-V3-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-StatusChanged-manual-check:6875
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-StatusChanged-manual-check-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-StatusLogger-PersistCopyItemLogBatch:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-StatusLogger-PersistCopyItemLogBatch-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-StatusLogger-PersistProductionUnitLogBatch:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-StatusLogger-PersistProductionUnitLogBatch-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Symphony-AddressChanger-ChangeAddress:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Symphony-AddressChanger-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Symphony-Notifications-Processor-Status-Changed:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Symphony-Notifications-Processor-Status-Changed-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Symphony-OrderCanceller-CancelOrder:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Symphony-OrderCanceller-CancelOrder-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Symphony-OrderPlacer-PlaceOrder:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-Symphony-OrderPlacer-PlaceOrder-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-ColdStorage-Restore-Completed:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-ColdStorage-Restore-Completed-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-DocumentRetrievalFinished:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-DocumentRetrievalFinished-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-OrderDeliveryReady-BHI:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-OrderDeliveryReady-BHI-DLQ:20
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-OrderDeliveryReady-ELA:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-OrderDeliveryReady-ELA-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-OrderDeliveryReady-KIS:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-OrderDeliveryReady-KIS-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-OrderDeliveryReady-NLH:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-OrderDeliveryReady-NLH-DLQ:1
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-OrderDeliveryReady-RRD:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-OrderDeliveryReady-RRD-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-OrderDeliveryReady-SYM:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-OrderDeliveryReady-SYM-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-OrderDeliveryReady-YPB:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-OrderDeliveryReady-YPB-DLQ:458
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-PlantUpdated:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-PlantUpdated-DLQ:43
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-Product-Finalized:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-Product-Finalized-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-ProductFinalized-V2:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-ProductFinalized-V2-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-ProductsReady:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-ProductsReady-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-TryCreateTickets:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketCreator-TryCreateTickets-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketMover-MoveTickets-Requested:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Fulfillment-TicketMover-MoveTickets-Requested-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/LambdaTimeoutAlarmCreator-event-dlq:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/LambdaTimeoutAlarmCreator-migration-dlq:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Localization-ScenarioRunner-Test-Requested:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Localization-ScenarioRunner-Test-Requested-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Martijn-Demo-Sns-Encryption-Queue:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Martijn-Demo-Sns-Encryption-Queue-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Martijn-Test-Experimental.fifo:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Mcp-ScenarioRunner-Test-Requested:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Mcp-ScenarioRunner-Test-Requested-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Mcp-StatusUpdater-UpdateStatus:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Mcp-StatusUpdater-UpdateStatus-DLQ:9
+https://sqs.eu-west-1.amazonaws.com/223296927953/Mcp-iWays-OrderCanceller-Cancel:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Mcp-iWays-OrderCanceller-Cancel-DLQ:20
+https://sqs.eu-west-1.amazonaws.com/223296927953/Mcp-iWays-OrderCreator-Create:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Mcp-iWays-OrderCreator-Create-DLQ:20
+https://sqs.eu-west-1.amazonaws.com/223296927953/Mcp-iWays-ReceiveStatus:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Mcp-iWays-ReceiveStatus-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Mcp-iWays-StatusForwarder-Input-DLQ.fifo:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Mcp-iWays-StatusForwarder-Input.fifo:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Monitoring-Ecs-EventsDetector-EventReceived:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Monitoring-Ecs-EventsDetector-EventReceived-Dlq:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Monitoring-Sqs-QueueOverflow-Alert-Input:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Monitoring-Sqs-QueueOverflow-Alert-Input-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Prepress-Imposition-Service-JobReady-BHI:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Prepress-Imposition-Service-JobReady-BHI-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Prepress-Imposition-Service-JobReady-KIS:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Prepress-Imposition-Service-JobReady-KIS-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Prepress-Imposition-Service-JobReady-NLH:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Prepress-Imposition-Service-JobReady-NLH-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Prepress-Imposition-Service-JobReady-YPB:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Prepress-Imposition-Service-JobReady-YPB-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Prepress-PhoenixAdapter-Imposition-Service-JobProcessed:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Prepress-PhoenixAdapter-Imposition-Service-JobProcessed-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Prepress-PrintQueueThrottler-ProcessJob-Requested-NLH:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Prepress-PrintQueueThrottler-ProcessJob-Requested-NLH-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Prepress-ScenarioRunner-Test-Requested:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Prepress-ScenarioRunner-Test-Requested-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Product-Pdf-Validation-Api-ScenarioRunner-Test-Requested:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Product-Pdf-Validation-Api-ScenarioRunner-Test-Requested-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Production-Scheduling-ScenarioRunner-Test-Requested:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Production-Scheduling-ScenarioRunner-Test-Requested-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Production-Tracking-DelayDetector-OrderBrokenPromiseCheck-NLH:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Production-Tracking-DelayDetector-OrderBrokenPromiseCheck-NLH-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Production-Tracking-DelayDetector-OrderBrokenPromiseCheck-YPB:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Production-Tracking-DelayDetector-OrderBrokenPromiseCheck-YPB-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Production-Tracking-DelayDetector-OrderDelayCheck-NLH:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Production-Tracking-DelayDetector-OrderDelayCheck-NLH-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Production-Tracking-DelayDetector-OrderDelayCheck-YPB:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Production-Tracking-DelayDetector-OrderDelayCheck-YPB-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Production-Tracking-ScenarioRunner-Test-Requested:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Production-Tracking-ScenarioRunner-Test-Requested-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-AddressChanger-ChangeAddress:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-AddressChanger-ChangeAddress-DLQ:40
+https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-Canceller-Cancel:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-Canceller-Cancel-DLQ:40
+https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-Creator-Create:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-Creator-Create-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-Reprocessor-Reprocess:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-Reprocessor-Reprocess-DLQ:82
+https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-ResourceFileProcessor-DocumentRetrievalFinished:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-ResourceFileProcessor-DocumentRetrievalFinished-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-ScenarioRunner-Test-Requested:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-ScenarioRunner-Test-Requested-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-iWays-Cancel:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-iWays-Cancel-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-iWays-CancelTestOrder-DLQ.fifo:704
+https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-iWays-CancelTestOrder.fifo:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-iWays-ChangeAddress:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-iWays-ChangeAddress-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-iWays-CreateOrder:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-iWays-CreateOrder-DLQ:198
+https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-iWays-CreateOrder-ManualCheck:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-iWays-NotifyProduction:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-iWays-NotifyProduction-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-iWays-StatusReceiver-Forwarder-Input-DLQ.fifo:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-iWays-StatusReceiver-Forwarder-Input.fifo:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-iWays-StatusReceiver-Input-DLQ.fifo:598
+https://sqs.eu-west-1.amazonaws.com/223296927953/ProductionOrder-iWays-StatusReceiver-Input.fifo:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Shipping-Centiro-ScenarioRunner-Test-Requested:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Shipping-Centiro-ScenarioRunner-Test-Requested-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Shipping-ScenarioRunner-Test-Requested:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Shipping-ScenarioRunner-Test-Requested-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Shipping-ViperIntake-Received:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Shipping-ViperIntake-Received-DLQ:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Testing-ScenarioRunner-Test-Requested:0
+https://sqs.eu-west-1.amazonaws.com/223296927953/Testing-ScenarioRunner-Test-Requested-DLQ:0
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='cp1252'>
+OSError: [Errno 22] Invalid argument
+^C
