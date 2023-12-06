@@ -583,18 +583,23 @@ namespace Albelli.MiscUtils.CLI
             {
                 string currMsg = dr["Message"] as string;
                 string currCorrId = dr["X-CorrelationId"] as string;
-                var dle = DiscrepancyLogEntry.Parse(currMsg);
+                var dle = DiscrepancyLogEntryParser.Parse(currMsg);
                 dle.XCorrelationId = currCorrId;
-                if (dt.Columns.Contains(nameof(dle.timestamp_cw)))
-                    dle.timestamp_cw = dr[nameof(dle.timestamp_cw)] as string;
+                if (dt.Columns.Contains($"@{nameof(dle.timestamp_cw)}"))
+                    dle.timestamp_cw = dr[$"@{nameof(dle.timestamp_cw)}"] as string;
                 AccountForPCT9944(diffs, dle.DiffStr, currCorrId, dle.Input);
                 AccountForPCT9944(missing, dle.Missing, currCorrId, dle.Input);
                 AccountForPCT9944(excessive, dle.Excessive, currCorrId, dle.Input);
+                des.Add(dle);
+            }
+            if (!string.IsNullOrWhiteSpace(outputTablePath))
+            {
+                //System.IO.File.WriteAllText(outputTablePath, JsonConvert.SerializeObject(des, Formatting.Indented));
+                System.IO.File.WriteAllText(outputTablePath, DiscrepancyLogEntryPrinter.Print(des));
             }
             PrintPCT9944Keys(nameof(diffs),diffs);
             PrintPCT9944Keys(nameof(missing), missing);
             PrintPCT9944Keys(nameof(excessive), excessive);
-
             PrintPCT9944FullDiffInfo(nameof(diffs), diffs);
             return 0;
         }
