@@ -1,11 +1,14 @@
 ﻿using Albelli.MiscUtils.Lib;
 using Albelli.MiscUtils.Lib.AWSCli;
 using Albelli.MiscUtils.Lib.ESLogs;
+using Albelli.MiscUtils.Lib.Excel;
 using Albelli.MiscUtils.Lib.PCT9944;
 using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json;
 using System;
 using System.Data;
+using System.Data.Common;
+using System.Data.Odbc;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -604,7 +607,7 @@ namespace Albelli.MiscUtils.CLI
             return 0;
         }
 
-
+        #region PCT-9944 discrepancies analyzer stuff
         private static void PrintPCT9944FullDiffInfo(string heading, Dictionary<string, PCT9944FullDiffInfo> diffs)
         {
             Console.WriteLine(new string('-', 33));
@@ -630,7 +633,111 @@ namespace Albelli.MiscUtils.CLI
             if (!target[key].XCorrelationIds.Contains(currCorrId)) target[key].XCorrelationIds.Add(currCorrId);
             if (!target[key].Inputs.Contains(currInput)) target[key].Inputs.Add(currInput);
         }
+        #endregion
 
+        public static int QueryExcel(string[] args)
+        {
+            string excelPath = args[0];
+            string query = args[1];
+            string orderBy = args[2];
+            string strConnString = $"Driver={{Microsoft Excel Driver (*.xls, *.xlsx, *.xlsm, *.xlsb)}};Dbq={excelPath};Extensions=xls/xlsx;Persist Security Info=False";
+            DataTable ds;
+            using (OdbcConnection oConn = new OdbcConnection(strConnString))
+            {
+                using (OdbcCommand oCmd = new OdbcCommand())
+                {
+                    oCmd.Connection = oConn;
+
+                    oCmd.CommandType = System.Data.CommandType.Text;
+                    oCmd.CommandText = "select * from [Sheet1$]";
+
+                    OdbcDataAdapter oAdap = new OdbcDataAdapter();
+                    oAdap.SelectCommand = oCmd;
+
+                    ds = new DataTable();
+                    oAdap.Fill(ds);
+                    oAdap.Dispose();
+
+
+
+                    // ds.Dispose();
+                }
+                DataRow[] rows = ds.Select(query, orderBy);
+                PrintDataRows(rows, ds);
+            }
+            return 0;
+        }
+
+        public static int QueryExcel2(string[] args)
+        {
+            string excelPath = args[0];
+            string query = args[1];
+            string orderBy = args.Length > 2 ?  args[2] : string.Empty;
+            using (DataTable ds = ExcelReader.Read(excelPath))
+            {
+                DataRow[] rows = string.IsNullOrWhiteSpace(orderBy) ? ds.Select(query) : ds.Select(query, orderBy);
+                PrintDataRows(rows, ds);
+
+            }
+            return 0;
+        }
+
+        public static int PCT9944_MatchCandidates(string[] args)
+        {
+            string ACSSMatrixPath = args[0];
+            string ACSSZonesPath = args[1];
+            string inputJsonPath = args[2];
+            var request = JsonConvert.DeserializeObject<DiscrepancyLogEntry>(System.IO.File.ReadAllText(inputJsonPath));
+            using (DataTable matrix = ExcelReader.Read(ACSSMatrixPath))
+            using (DataTable zones = ExcelReader.Read(ACSSZonesPath))
+            {
+                ACSSCandidatesFilterer filterer = new ACSSCandidatesFilterer(matrix, zones);
+                //DataRow[] drs = filterer.PreFilter(request.ParsedInput);
+
+                //PrintDataRows(drs, matrix);
+                var resp = filterer.Filter(request.ParsedInput);
+                //Console.WriteLine(JsonConvert.SerializeObject(resp, Formatting.Indented));
+                Console.WriteLine($"{nameof(resp.PreFilterQuery)}:{resp.PreFilterQuery}");
+                resp.Candidates.ForEach(r => Console.WriteLine($"{r.MatrixRow.PK()}:{r.Verdict.ToString()}({string.Join(", ",r.NonMatchingFields)})\t{r.MatrixRow.Priority}"));
+            }
+            return 0;
+        }
+
+        public static int PCT9944Revalidate(string[] args)
+        {
+            string srcXlsPath = args[0];
+            string apiEndpoint = args[1];
+            string apiAuthToken = args[2];
+            string ACSSMatrixPath = args[3];
+            string ACSSZonesPath = args[4];
+
+            using (DataTable dtMain = ExcelReader.Read(srcXlsPath))
+            using (DataTable dtMatrix = ExcelReader.Read(ACSSMatrixPath))
+            using (DataTable dtZones = ExcelReader.Read(ACSSZonesPath))
+            {
+                foreach (DataRow dr in dtMain.Rows)
+                {
+                    //??!
+                }
+            }
+
+            return 0;
+        }
+
+        private static void PrintDataRows(DataRow[] rows, DataTable ds)
+        {
+            foreach (DataRow dr in rows)
+            {
+                for(int c=0; c< ds.Columns.Count; c++)
+                {
+                    if (c > 0)
+                        Console.Write('\t');
+                    Console.Write(dr[c] as string);
+
+                }
+                Console.WriteLine();
+            }
+        }
         #endregion
         #region aux
         public static int ExitWithComplaints(string msg, int ret)

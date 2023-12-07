@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,6 +9,7 @@ namespace Albelli.MiscUtils.Lib.PCT9944
 {
     public static class DiscrepancyLogEntryPrinter
     {
+        private const string JSONColNm = "JSON";
         private static readonly string[] Columns = new string[] {"timestamp_cw"
 , "XCorrelationId"
 , "CentiroV1"
@@ -26,7 +28,8 @@ namespace Albelli.MiscUtils.Lib.PCT9944
 , "Package.WeightInGrams"
 , "Package.Type"
 , "ArticleTypes"
-, "DeliveryTypes" };
+, "DeliveryTypes"
+, JSONColNm};
         private static readonly List<string> lColumns = new List<string>(Columns);
         public static string Print(List<DiscrepancyLogEntry> dles)
         {
@@ -62,6 +65,7 @@ namespace Albelli.MiscUtils.Lib.PCT9944
             InsertValue(dle.ParsedInput.Package.Type, $"{nameof(dle.ParsedInput.Package)}.{nameof(dle.ParsedInput.Package.Type)}", currLine);
             InsertValue(string.Join(", ",dle.ParsedInput.ArticleTypes), nameof(dle.ParsedInput.ArticleTypes), currLine);
             InsertValue(string.Join(", ", dle.ParsedInput.DeliveryTypes), nameof(dle.ParsedInput.DeliveryTypes), currLine);
+            InsertValue(JsonConvert.SerializeObject(dle, Formatting.None), JSONColNm, currLine);
             sb.AppendLine(string.Join('\t', currLine.ToArray()));
         }
 
