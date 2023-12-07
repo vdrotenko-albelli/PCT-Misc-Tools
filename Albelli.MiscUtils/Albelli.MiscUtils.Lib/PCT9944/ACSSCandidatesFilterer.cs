@@ -72,7 +72,6 @@ namespace Albelli.MiscUtils.Lib.PCT9944
                 case "L+W+H": calcDims = package.LengthInMm+ package.WidthInMm + package.HeightInMm; break;
                 case "L+2D": calcDims = package.LengthInMm + 2*package.WidthInMm; break;
                 default:
-                    //throw new ArgumentException($"{nameof(calculationType)}:'{calculationType}' unsupported.");
                     return $"Unsupported {nameof(calculationType)}:'{calculationType}'.";
             }
             if (calcDims <= calculationMaxLimit) return string.Empty;
@@ -122,14 +121,6 @@ namespace Albelli.MiscUtils.Lib.PCT9944
         private string BuildZonesWhereClause(List<string> zones)
         {
             return $"[Zone Code] IN ('{string.Join("', '",zones.ToArray())}')";
-            //StringBuilder sb = new StringBuilder();
-            //for (int i = 0; i < zones.Count; i++) 
-            //{
-            //    if (i > 0)sb.Append(" OR ");
-            //    sb.Append($"[Zone Code]"zones[i]);
-            //}
-            //if (zones.Count > 0) { sb.Append(")"); }
-            //return sb.ToString();
         }
     }
 }
