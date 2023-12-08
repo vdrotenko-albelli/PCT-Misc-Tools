@@ -81,7 +81,7 @@ namespace Albelli.MiscUtils.Lib.PCT9944
         private bool ValidateDimension(int min, int max, int val)
         {
             if (min == 0 && max == 0) return true;
-            return val > min && val <= max;
+            return val >= min && val <= max;
         }
 
         private bool ValidateDimension(int max, int val)

@@ -744,15 +744,25 @@ namespace Albelli.MiscUtils.CLI
             string ACSSMatrixPath = args[0];
             string ACSSZonesPath = args[1];
             string inputJsonPath = args[2];
-            var request = JsonConvert.DeserializeObject<DiscrepancyLogEntry>(System.IO.File.ReadAllText(inputJsonPath));
+            DiscrepancyLogEntry req_DLE = null;
+            AvailableCarriersRequestV2 req_API = null;
+            try
+            {
+                req_DLE = JsonConvert.DeserializeObject<DiscrepancyLogEntry>(System.IO.File.ReadAllText(inputJsonPath));
+            }
+            catch { }
+            try {
+                req_API = JsonConvert.DeserializeObject<AvailableCarriersRequestV2>(System.IO.File.ReadAllText(inputJsonPath));
+            } catch { }
+            
             using (DataTable matrix = ExcelReader.Read(ACSSMatrixPath))
             using (DataTable zones = ExcelReader.Read(ACSSZonesPath))
             {
                 ACSSCandidatesFilterer filterer = new ACSSCandidatesFilterer(matrix, zones);
                 //DataRow[] drs = filtererProd.PreFilter(request.ParsedInput);
-
+                CalculateCarrierModel ccm = req_DLE?.ParsedInput?.Package?.WeightInGrams > 0 ? req_DLE.ParsedInput : (CalculateCarrierModel)req_API;
                 //PrintDataRows(drs, matrix);
-                var resp = filterer.Filter(request.ParsedInput);
+                var resp = filterer.Filter(ccm);
                 //Console.WriteLine(JsonConvert.SerializeObject(resp, Formatting.Indented));
                 Console.WriteLine($"{nameof(resp.PreFilterQuery)}:{resp.PreFilterQuery}");
                 resp.Candidates.ForEach(r => Console.WriteLine($"{r.MatrixRow.PK()}:{r.Verdict.ToString()}({string.Join(", ",r.NonMatchingFields)})\t{r.MatrixRow.Priority}"));
@@ -772,7 +782,7 @@ namespace Albelli.MiscUtils.CLI
             string ACSSZonesPath = args[7];
             string ACSSMatrixPath_Uat = args[8];
 
-            Console.WriteLine($"CentiroV1\tCentiroV2\tmatrixTopCandidate_Prod\tmatrixTopCandidate_Uat\tX-CorrelationId_Prod\tApiRespCandidateProd\tApiResponseCandidateUAT\tCentiroV2Req");
+            Console.WriteLine($"ts\tCentiroV1\tCentiroV2\tmatrixTopCandidate_Prod\tmatrixTopCandidate_Uat\tX-CorrelationId_Prod\tApiRespCandidateProd\tApiResponseCandidateUAT\tCentiroV2Req");
             using (DataTable dtMain = ExcelReader.Read(srcXlsPath, srcXlsSheet))
             using (DataTable dtMatrix_Prod = ExcelReader.Read(ACSSMatrixPath_Prod))
             using (DataTable dtZones_Prod = ExcelReader.Read(ACSSZonesPath))
@@ -794,10 +804,11 @@ namespace Albelli.MiscUtils.CLI
                         var filteredProd = filtererProd.Filter(dle.ParsedInput);
                         ACSSCandidatesFilterer filtererUat = new ACSSCandidatesFilterer(dtMatrix_Uat, dtZones_Uat);
                         var filteredUat = filtererUat.Filter(dle.ParsedInput);
-                        var currApiCorrId = Guid.NewGuid().ToString();
+                        var currApiCorrId = Guid.NewGuid().ToString(); //$"PCT-9944-Revalidate-{Guid.NewGuid().ToString()}";
                         var corrIdExreHdrs = new Dictionary<string, string>() { { "X-CorrelationId", currApiCorrId } };
                         AvailableCarriersRequestV2 centiroV2Req = (AvailableCarriersRequestV2)dle.ParsedInput;
                         string centiroV2ReqJson = JsonConvert.SerializeObject(centiroV2Req, Formatting.None);
+                        DateTime ts = DateTime.Now;
                         var centiroResponseProd = ApiUtility.Post(apiEndpointProd, apiAuthTokenProd, centiroV2ReqJson, corrIdExreHdrs);///corrIdExreHdrs
                         List<AvailableCarriersResponse> avCarrsProd = null;
                         if (centiroResponseProd.Item1 == HttpStatusCode.OK)
@@ -812,7 +823,7 @@ namespace Albelli.MiscUtils.CLI
                         }
                         var matrixTopCandidate_Prod = filteredProd.Candidates?.Where(c => c.Verdict == ACSSFilteringVerdict.Served).FirstOrDefault();
                         var matrixTopCandidate_Uat = filteredUat.Candidates?.Where(c => c.Verdict == ACSSFilteringVerdict.Served).FirstOrDefault();
-                        Console.WriteLine($"{CentiroV1}\t{CentiroV2}\t{matrixTopCandidate_Prod?.MatrixRow?.PK()}\t{matrixTopCandidate_Uat?.MatrixRow?.PK()}\t{currApiCorrId}\t{avCarrsProd?.FirstOrDefault()?.PK()}\t{avCarrsUat?.FirstOrDefault()?.PK()}\t{centiroV2ReqJson}");
+                        Console.WriteLine($"{ts:s}\t{CentiroV1}\t{CentiroV2}\t{matrixTopCandidate_Prod?.MatrixRow?.PK()}\t{matrixTopCandidate_Uat?.MatrixRow?.PK()}\t{currApiCorrId}\t{avCarrsProd?.FirstOrDefault()?.PK()}\t{avCarrsUat?.FirstOrDefault()?.PK()}\t{centiroV2ReqJson}");
                     }
                     catch (Exception ex)
                     {
@@ -825,6 +836,12 @@ namespace Albelli.MiscUtils.CLI
             return 0;
         }
 
+        public static int PCT9944BulkRevalidateChecker(string[] args)
+        {
+            string bulkReValidateOutputPath = args[0];
+            //string 
+            return 0;
+        }
         private static void PrintDataRows(DataRow[] rows, DataTable ds)
         {
             foreach (DataRow dr in rows)

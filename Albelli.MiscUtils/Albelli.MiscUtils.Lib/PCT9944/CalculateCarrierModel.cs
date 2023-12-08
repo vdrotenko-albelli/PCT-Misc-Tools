@@ -57,7 +57,28 @@ namespace Albelli.MiscUtils.Lib.PCT9944
             return rslt;
         }
 
-    }
+        public static explicit operator CalculateCarrierModel(AvailableCarriersRequestV2 model)
+        {
+            if (model == null) { return null; }
+            CalculateCarrierModel rslt = new CalculateCarrierModel();
+            rslt.Brand = model.Brand;
+            rslt.CountryId = model.CountryId;
+            rslt.ZipCode = model.ZipCode;
+            rslt.EstimatedDeliveryDate = model.EstimatedDeliveryDate;
+            rslt.EstimatedShippingDate = model.EstimatedShippingDate;
+            rslt.Package = new Package()
+            {
+                LengthInMm = (int)model.Package.Dimensions.Length,
+                WidthInMm = (int)model.Package.Dimensions.Width,
+                HeightInMm = (int)model.Package.Dimensions.Height,
+                WeightInGrams = (int)model.Package.Weight.Value,
+                Type = model.Package.Type
+            };
+            rslt.PlantCode = model.PlantCode;
+            return rslt;
+        }
+
+}
 
 
 }
