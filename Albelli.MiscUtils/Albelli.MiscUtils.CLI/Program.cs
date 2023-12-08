@@ -345,6 +345,60 @@ namespace Albelli.MiscUtils.CLI
             return 0;
         }
 
+        public static int ApiPostJsons(string[] args)
+        {
+            const string RequestIdHdr = "Request-Id";
+            string inFilePath = args[0];
+            string token = args[1];
+            List<Tuple<string, string, string>> urlsPaths = new List<Tuple<string, string, string>>();
+            var lns = System.IO.File.ReadAllLines(inFilePath);
+            foreach (var ln in lns)
+            {
+                if (string.IsNullOrWhiteSpace(ln)) continue;
+                var flds = ln.Split('\t');
+                if (flds.Length < 3) continue;
+                urlsPaths.Add(new Tuple<string, string, string>(flds[0].Trim(), flds[1].Trim(), flds[2]));
+            }
+            using (HttpClient wc = new HttpClient())
+            {
+                wc.DefaultRequestHeaders.Add("authorization", $"Bearer {token}");
+                wc.DefaultRequestHeaders.Add("Correlation-Context", "X-Is-Load-Test-Request=True");
+                foreach (var pair in urlsPaths)
+                {
+                    try
+                    {
+                        if (System.IO.File.Exists(pair.Item2)) continue;
+                        using (var reqMsg = new HttpRequestMessage(HttpMethod.Post, pair.Item1))
+                        {
+                            reqMsg.Headers.Add(RequestIdHdr, Guid.NewGuid().ToString());
+                            reqMsg.Headers.Add("Accept", "application/json");
+                            //reqMsg.Headers.Add("Content-Type", "application/json");
+                            reqMsg.Content = new StringContent(pair.Item3,Encoding.UTF8, "application/json");
+                            var resp = wc.SendAsync(reqMsg).ConfigureAwait(false).GetAwaiter().GetResult();
+                            if (resp.StatusCode == HttpStatusCode.OK)
+                            {
+                                var responseContent = resp.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+                                System.IO.File.WriteAllText(pair.Item2, responseContent);
+                            }
+                            else
+                            {
+                                string respContent = null;
+                                try {
+                                    respContent = resp.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+                                } catch { }
+                                Console.Error.WriteLine($"{pair.Item1}:{(int)resp.StatusCode} {resp.StatusCode}/{respContent}/{resp.ReasonPhrase}");
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.Error.WriteLine($"Error getting {pair.Item1}:{ex}");
+                    }
+                }
+            }
+            return 0;
+        }
+
         public static int AlbelliReadSALs(string[] args)
         {
             string inFilePath = args[0];
@@ -500,6 +554,7 @@ namespace Albelli.MiscUtils.CLI
             return 0;
         }
 
+        #region PCT-10480
         public static int DetectMultiAddressPOs(string[] args)
         {
             string inFilePath = args[0];
@@ -530,6 +585,8 @@ namespace Albelli.MiscUtils.CLI
             if ((int)total == 0 || (int)share == 0) return 0.0M;
             return Math.Round(100.0M * (decimal)(int)share / (decimal)(int)total, 2);
         }
+        #endregion
+
         private static bool AllColumnsPresent(DataTable dt, Dictionary<string, string> logField2Props)
         {
             foreach (var key in logField2Props.Keys)
@@ -571,7 +628,7 @@ namespace Albelli.MiscUtils.CLI
             }
             return 0;
         }
-
+        #region PCT-9944
         public static int AnalyzePCT9944Discrepancies(string[] args)
         {
             var inputCsv = args[0];
@@ -692,7 +749,7 @@ namespace Albelli.MiscUtils.CLI
             using (DataTable zones = ExcelReader.Read(ACSSZonesPath))
             {
                 ACSSCandidatesFilterer filterer = new ACSSCandidatesFilterer(matrix, zones);
-                //DataRow[] drs = filterer.PreFilter(request.ParsedInput);
+                //DataRow[] drs = filtererProd.PreFilter(request.ParsedInput);
 
                 //PrintDataRows(drs, matrix);
                 var resp = filterer.Filter(request.ParsedInput);
@@ -703,21 +760,65 @@ namespace Albelli.MiscUtils.CLI
             return 0;
         }
 
-        public static int PCT9944Revalidate(string[] args)
+        public static int PCT9944BulkRevalidate(string[] args)
         {
             string srcXlsPath = args[0];
-            string apiEndpoint = args[1];
-            string apiAuthToken = args[2];
-            string ACSSMatrixPath = args[3];
-            string ACSSZonesPath = args[4];
+            string srcXlsSheet = args[1];
+            string apiEndpointProd = args[2];
+            string apiAuthTokenProd = args[3];
+            string apiEndpointUat = args[4];
+            string apiAuthTokenUat = args[5];
+            string ACSSMatrixPath_Prod = args[6];
+            string ACSSZonesPath = args[7];
+            string ACSSMatrixPath_Uat = args[8];
 
-            using (DataTable dtMain = ExcelReader.Read(srcXlsPath))
-            using (DataTable dtMatrix = ExcelReader.Read(ACSSMatrixPath))
-            using (DataTable dtZones = ExcelReader.Read(ACSSZonesPath))
+            Console.WriteLine($"CentiroV1\tCentiroV2\tmatrixTopCandidate_Prod\tmatrixTopCandidate_Uat\tX-CorrelationId_Prod\tApiRespCandidateProd\tApiResponseCandidateUAT\tCentiroV2Req");
+            using (DataTable dtMain = ExcelReader.Read(srcXlsPath, srcXlsSheet))
+            using (DataTable dtMatrix_Prod = ExcelReader.Read(ACSSMatrixPath_Prod))
+            using (DataTable dtZones_Prod = ExcelReader.Read(ACSSZonesPath))
+            using (DataTable dtMatrix_Uat = ExcelReader.Read(ACSSMatrixPath_Uat))
+            using (DataTable dtZones_Uat = ExcelReader.Read(ACSSZonesPath))
             {
+                int rowIdx = 0;
                 foreach (DataRow dr in dtMain.Rows)
                 {
-                    //??!
+                    try
+                    {
+                        string JSON = dr[nameof(JSON)] as string;
+                        string CentiroV1 = dr[nameof(CentiroV1)] as string;
+                        string CentiroV2 = dr[nameof(CentiroV2)] as string;
+                        if (string.IsNullOrWhiteSpace(JSON) && string.IsNullOrWhiteSpace(CentiroV1) && string.IsNullOrWhiteSpace(CentiroV2))
+                            break;
+                        DiscrepancyLogEntry dle = JsonConvert.DeserializeObject<DiscrepancyLogEntry>(JSON);
+                        ACSSCandidatesFilterer filtererProd = new ACSSCandidatesFilterer(dtMatrix_Prod, dtZones_Prod);
+                        var filteredProd = filtererProd.Filter(dle.ParsedInput);
+                        ACSSCandidatesFilterer filtererUat = new ACSSCandidatesFilterer(dtMatrix_Uat, dtZones_Uat);
+                        var filteredUat = filtererUat.Filter(dle.ParsedInput);
+                        var currApiCorrId = Guid.NewGuid().ToString();
+                        var corrIdExreHdrs = new Dictionary<string, string>() { { "X-CorrelationId", currApiCorrId } };
+                        AvailableCarriersRequestV2 centiroV2Req = (AvailableCarriersRequestV2)dle.ParsedInput;
+                        string centiroV2ReqJson = JsonConvert.SerializeObject(centiroV2Req, Formatting.None);
+                        var centiroResponseProd = ApiUtility.Post(apiEndpointProd, apiAuthTokenProd, centiroV2ReqJson, corrIdExreHdrs);///corrIdExreHdrs
+                        List<AvailableCarriersResponse> avCarrsProd = null;
+                        if (centiroResponseProd.Item1 == HttpStatusCode.OK)
+                        {
+                            avCarrsProd = JsonConvert.DeserializeObject<List<AvailableCarriersResponse>>(centiroResponseProd.Item2);
+                        }
+                        var centiroResponseUat = ApiUtility.Post(apiEndpointUat, apiAuthTokenUat, centiroV2ReqJson, null);///corrIdExreHdrs
+                        List<AvailableCarriersResponse> avCarrsUat = null;
+                        if (centiroResponseUat.Item1 == HttpStatusCode.OK)
+                        {
+                            avCarrsUat = JsonConvert.DeserializeObject<List<AvailableCarriersResponse>>(centiroResponseUat.Item2);
+                        }
+                        var matrixTopCandidate_Prod = filteredProd.Candidates?.Where(c => c.Verdict == ACSSFilteringVerdict.Served).FirstOrDefault();
+                        var matrixTopCandidate_Uat = filteredUat.Candidates?.Where(c => c.Verdict == ACSSFilteringVerdict.Served).FirstOrDefault();
+                        Console.WriteLine($"{CentiroV1}\t{CentiroV2}\t{matrixTopCandidate_Prod?.MatrixRow?.PK()}\t{matrixTopCandidate_Uat?.MatrixRow?.PK()}\t{currApiCorrId}\t{avCarrsProd?.FirstOrDefault()?.PK()}\t{avCarrsUat?.FirstOrDefault()?.PK()}\t{centiroV2ReqJson}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error processing row # {rowIdx}\t{ex.Message}\t{ex.StackTrace?.Replace("\n"," ")?.Replace("\r", "")}");
+                    }
+                    rowIdx++;
                 }
             }
 
@@ -738,6 +839,9 @@ namespace Albelli.MiscUtils.CLI
                 Console.WriteLine();
             }
         }
+
+        #endregion
+
         #endregion
         #region aux
         public static int ExitWithComplaints(string msg, int ret)

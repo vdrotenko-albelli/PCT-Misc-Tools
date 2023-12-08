@@ -13,10 +13,11 @@ namespace Albelli.MiscUtils.Lib.Excel
 {
     public static class ExcelReader
     {
-        public static DataTable Read(string excelPath) 
+        public static DataTable Read(string excelPath, string sheetName = null) 
         {
             string strConnString = $"Driver={{Microsoft Excel Driver (*.xls, *.xlsx, *.xlsm, *.xlsb)}};Dbq={excelPath};Extensions=xls/xlsx;Persist Security Info=False";
             DataTable rslt;
+            string actualSheetName = !string.IsNullOrWhiteSpace(sheetName) ? sheetName : "Sheet1";
             using (OdbcConnection oConn = new OdbcConnection(strConnString))
             {
                 using (OdbcCommand oCmd = new OdbcCommand())
@@ -24,7 +25,7 @@ namespace Albelli.MiscUtils.Lib.Excel
                     oCmd.Connection = oConn;
 
                     oCmd.CommandType = System.Data.CommandType.Text;
-                    oCmd.CommandText = "select * from [Sheet1$]";
+                    oCmd.CommandText = $"select * from [{actualSheetName}$]";
 
                     OdbcDataAdapter oAdap = new OdbcDataAdapter();
                     oAdap.SelectCommand = oCmd;
