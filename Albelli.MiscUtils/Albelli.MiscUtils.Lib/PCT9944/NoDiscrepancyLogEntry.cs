@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Albelli.MiscUtils.Lib.PCT9944
 {
-    public class DiscrepancyLogEntry
+    public class NoDiscrepancyLogEntry
     {
         public string Input { get; set; }
         private CalculateCarrierModel _parsedInput = null;
@@ -21,16 +21,7 @@ namespace Albelli.MiscUtils.Lib.PCT9944
                 return _parsedInput;
             }
         }
-        public int V1Count { get; set; }
-        public int V2Count { get; set; }
-        public string CentiroV1 { get; set; }
-        public string CentiroV2 { get; set; }
-        public string DiffStr 
-        {
-            get => $"{CentiroV1} vs {CentiroV2}";
-        }
-        public string Missing { get; set; }
-        public string Excessive { get; set; }
+        public string Centiro { get; set; }
         public string XCorrelationId { get; set; }
         public string timestamp_cw { get; set; }
     }

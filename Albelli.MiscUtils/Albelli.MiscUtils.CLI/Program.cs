@@ -5,6 +5,7 @@ using Albelli.MiscUtils.Lib.Excel;
 using Albelli.MiscUtils.Lib.PCT9944;
 using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json;
+using ProductionOrderOperationsApi;
 using System;
 using System.Data;
 using System.Data.Common;
@@ -194,7 +195,7 @@ namespace Albelli.MiscUtils.CLI
             Console.WriteLine($"{nameof(duplicates)}: {JsonConvert.SerializeObject(duplicates, Formatting.Indented)}");
             */
             Console.WriteLine(new string('-', 33));
-            var hourly = eSLogEntries.GroupBy(e => e.ts.Hour).Select(grp => new { Hour = grp.Key, Count = grp.Count(), RPM = (decimal) grp.Count() / 60.0M }).ToList();
+            var hourly = eSLogEntries.GroupBy(e => e.ts.Hour).Select(grp => new { Hour = grp.Key, Count = grp.Count(), RPM = (decimal)grp.Count() / 60.0M }).ToList();
             Console.WriteLine($"{nameof(hourly)}: {JsonConvert.SerializeObject(hourly, Formatting.Indented)}");
             var maxHourly = hourly.Max(e => e.RPM);
             Console.WriteLine($"{nameof(maxHourly)}: {maxHourly}");
@@ -218,7 +219,7 @@ namespace Albelli.MiscUtils.CLI
 
             foreach (var logFilePathRaw in logFilePaths)
             {
-                var logFilePath = logFilePathRaw?.Trim();                
+                var logFilePath = logFilePathRaw?.Trim();
                 if (string.IsNullOrWhiteSpace(logFilePath) || !System.IO.File.Exists(logFilePath))
                     continue;
                 var dt = Tools.Csv2DataTable(logFilePath, ',');
@@ -271,17 +272,17 @@ namespace Albelli.MiscUtils.CLI
             var hourly = eSLogEntriesAll.GroupBy(e => e.ts.ToString("yyyy-MM-dd_HH")).Select(grp => new { Hour = grp.Key, Count = grp.Count(), RPM = (decimal)grp.Count() / 60.0M }).ToList();
             var maxHourly = hourly.Max(e => e.RPM);
             Console.WriteLine($"max hourly AVG RPM: {maxHourly}");
-            var minutely = eSLogEntriesAll.GroupBy(e => e.ts.ToString("yyyy-MM-dd_HH:mm")).Select(grp => new { Minute = grp.Key, Count = grp.Count(), RPM = grp.Count()}).ToList();
+            var minutely = eSLogEntriesAll.GroupBy(e => e.ts.ToString("yyyy-MM-dd_HH:mm")).Select(grp => new { Minute = grp.Key, Count = grp.Count(), RPM = grp.Count() }).ToList();
             var maxMinutely = minutely.Max(e => e.RPM);
             Console.WriteLine($"max RPM (by minute): {maxMinutely}");
 
-            var secondly = eSLogEntriesAll.GroupBy(e => e.ts.ToString("yyyy-MM-dd_HH:mm:ss")).Select(grp => new { Second = grp.Key, Count = grp.Count()}).ToList();
+            var secondly = eSLogEntriesAll.GroupBy(e => e.ts.ToString("yyyy-MM-dd_HH:mm:ss")).Select(grp => new { Second = grp.Key, Count = grp.Count() }).ToList();
             var maxSecondly = secondly.Max(e => e.Count);
             Console.WriteLine($"max parallel requests (by second): {maxSecondly}");
 
-            var aboveOurNormalBestPct_HourlyAvg = Math.Round(100.0M * hourly.Where(h => h.RPM > normalBestRPM).Count() / hourly.Count(),2);
+            var aboveOurNormalBestPct_HourlyAvg = Math.Round(100.0M * hourly.Where(h => h.RPM > normalBestRPM).Count() / hourly.Count(), 2);
             var aboveOurNormalBestPct_Minutely = Math.Round(100.0M * minutely.Where(h => h.RPM > normalBestRPM).Count() / minutely.Count(), 2);
-            var aboveOurNormalBestPct_Secondly = Math.Round(100.0M * secondly.Where(h => h.Count> ourNormalVUs).Count() / secondly.Count(), 2);
+            var aboveOurNormalBestPct_Secondly = Math.Round(100.0M * secondly.Where(h => h.Count > ourNormalVUs).Count() / secondly.Count(), 2);
             Console.WriteLine($"Pctg of hourly AVG above our normal best RPM({normalBestRPM}):{aboveOurNormalBestPct_HourlyAvg}");
             Console.WriteLine($"Pctg of minutely AVG above our normal best RPM({normalBestRPM}):{aboveOurNormalBestPct_Minutely}");
             Console.WriteLine($"Pctg of parallel requests at a second above our normal parallel VUs ({ourNormalVUs}):{aboveOurNormalBestPct_Secondly}");
@@ -300,14 +301,14 @@ namespace Albelli.MiscUtils.CLI
             const string RequestIdHdr = "Request-Id";
             string inFilePath = args[0];
             string token = args[1];
-            List<Tuple<string,string>> urlsPaths = new List<Tuple<string,string>>();
+            List<Tuple<string, string>> urlsPaths = new List<Tuple<string, string>>();
             var lns = System.IO.File.ReadAllLines(inFilePath);
             foreach (var ln in lns)
             {
                 if (string.IsNullOrWhiteSpace(ln)) continue;
                 var flds = ln.Split('\t');
                 if (flds.Length < 2) continue;
-                urlsPaths.Add(new Tuple<string,string>(flds[0].Trim(), flds[1].Trim()));
+                urlsPaths.Add(new Tuple<string, string>(flds[0].Trim(), flds[1].Trim()));
             }
             using (HttpClient wc = new HttpClient())
             {
@@ -373,7 +374,7 @@ namespace Albelli.MiscUtils.CLI
                             reqMsg.Headers.Add(RequestIdHdr, Guid.NewGuid().ToString());
                             reqMsg.Headers.Add("Accept", "application/json");
                             //reqMsg.Headers.Add("Content-Type", "application/json");
-                            reqMsg.Content = new StringContent(pair.Item3,Encoding.UTF8, "application/json");
+                            reqMsg.Content = new StringContent(pair.Item3, Encoding.UTF8, "application/json");
                             var resp = wc.SendAsync(reqMsg).ConfigureAwait(false).GetAwaiter().GetResult();
                             if (resp.StatusCode == HttpStatusCode.OK)
                             {
@@ -383,9 +384,11 @@ namespace Albelli.MiscUtils.CLI
                             else
                             {
                                 string respContent = null;
-                                try {
+                                try
+                                {
                                     respContent = resp.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-                                } catch { }
+                                }
+                                catch { }
                                 Console.Error.WriteLine($"{pair.Item1}:{(int)resp.StatusCode} {resp.StatusCode}/{respContent}/{resp.ReasonPhrase}");
                             }
                         }
@@ -424,7 +427,7 @@ namespace Albelli.MiscUtils.CLI
         public static int ExtractAllSALsFromESLogs(string[] args)
         {
             const string SALToken = "/orders/";
-            char[] sepChars = new char[] { '?','/',']', '"', '\''};
+            char[] sepChars = new char[] { '?', '/', ']', '"', '\'' };
             string csvPath = args[0];
             var dt = Tools.Csv2DataTable(csvPath, ',', maxBufferSize: 102400);
             List<string> rsltRaw = new List<string>();
@@ -436,7 +439,7 @@ namespace Albelli.MiscUtils.CLI
                     if (string.IsNullOrWhiteSpace(currCellTxt)) continue;
                     int pos0 = currCellTxt.IndexOf(SALToken);
                     if (pos0 == -1) continue;
-                    int pos1 = currCellTxt.IndexOfAny(sepChars,pos0+SALToken.Length+1);
+                    int pos1 = currCellTxt.IndexOfAny(sepChars, pos0 + SALToken.Length + 1);
                     string currSAL = pos1 == -1 ? currCellTxt.Substring(pos0 + SALToken.Length) : currCellTxt.Substring(pos0 + SALToken.Length, pos1 - (pos0 + SALToken.Length));
                     rsltRaw.Add(currSAL);
                 }
@@ -474,7 +477,7 @@ namespace Albelli.MiscUtils.CLI
                 var currPOProductIds = new List<string>();
                 orderDetails.ProductionOrders.ForEach(po => po.Shipments.ForEach(s => currPOProductIds.AddRange(s.Products.Distinct())));
                 //Console.WriteLine($"{nameof(currPOProductIds)}:{JsonConvert.SerializeObject(currPOProductIds, Formatting.None)}");
-                Console.WriteLine($"{Path.GetFileNameWithoutExtension( pair.Item2)}\t{orderDetails.Products.Count}\t{orderDetails.ProductionOrders.Count}\t{orderDetails.Fulfillment.Products.Count()}\t{currPOProdsCnt}\t{Pct(currProductsIds.Intersect(currPOProductIds).Count(), currProductsIds.Count)}\t{Pct(currProductsIds.Intersect(currFFProductIds).Count(), currProductsIds.Count)}\t{Pct(currFFProductIds.Except(currPOProductIds).Count(), currFFProductIds.Count)}\t{Pct(currPOProductIds.Except(currFFProductIds).Count(), currPOProductIds.Count)}\t{Pct(currFFProductIds.Except(currProductsIds).Count(), currFFProductIds.Count)}\t{Pct(currPOProductIds.Except(currProductsIds).Count(), currPOProductIds.Count)}\t{Pct(currPOProductIds.Intersect(currFFProductIds).Count(), currPOProductIds.Count)}\t{Pct(currFFProductIds.Intersect(currPOProductIds).Count(), currFFProductIds.Count)}");
+                Console.WriteLine($"{Path.GetFileNameWithoutExtension(pair.Item2)}\t{orderDetails.Products.Count}\t{orderDetails.ProductionOrders.Count}\t{orderDetails.Fulfillment.Products.Count()}\t{currPOProdsCnt}\t{Pct(currProductsIds.Intersect(currPOProductIds).Count(), currProductsIds.Count)}\t{Pct(currProductsIds.Intersect(currFFProductIds).Count(), currProductsIds.Count)}\t{Pct(currFFProductIds.Except(currPOProductIds).Count(), currFFProductIds.Count)}\t{Pct(currPOProductIds.Except(currFFProductIds).Count(), currPOProductIds.Count)}\t{Pct(currFFProductIds.Except(currProductsIds).Count(), currFFProductIds.Count)}\t{Pct(currPOProductIds.Except(currProductsIds).Count(), currPOProductIds.Count)}\t{Pct(currPOProductIds.Intersect(currFFProductIds).Count(), currPOProductIds.Count)}\t{Pct(currFFProductIds.Intersect(currPOProductIds).Count(), currFFProductIds.Count)}");
 
             }
 
@@ -506,10 +509,10 @@ namespace Albelli.MiscUtils.CLI
                 //Console.WriteLine($"{nameof(currProductsIds)}:{JsonConvert.SerializeObject(currProductsIds, Formatting.None)}");
                 var currFFProductIds = orderDetails.Fulfillment.Products.Select(p => p.ProductCode).Distinct().ToList();
                 //Console.WriteLine($"{nameof(currFFProductIds)}:{JsonConvert.SerializeObject(currFFProductIds, Formatting.None)}");
-                
-                
+
+
                 //Console.WriteLine($"{nameof(currPOProductIds)}:{JsonConvert.SerializeObject(currPOProductIds, Formatting.None)}");
-                Console.WriteLine($"{Path.GetFileNameWithoutExtension(pair.Item2)}\t{string.Join(",",currFFProductIds)}");
+                Console.WriteLine($"{Path.GetFileNameWithoutExtension(pair.Item2)}\t{string.Join(",", currFFProductIds)}");
 
             }
 
@@ -572,7 +575,7 @@ namespace Albelli.MiscUtils.CLI
             {
                 var orderDetails = JsonConvert.DeserializeObject<Albelli.CustomerCare.Backoffice.Models.OrderDetails>(System.IO.File.ReadAllText(pair.Item2));
                 if (orderDetails == null) continue;
-                int maxPoShipmentsCnt = orderDetails.ProductionOrders != null && orderDetails.ProductionOrders.Any() ? orderDetails.ProductionOrders.Max(o => o.Shipments!= null && o.Shipments.Any() ? o.Shipments.Count : 0) : 0;
+                int maxPoShipmentsCnt = orderDetails.ProductionOrders != null && orderDetails.ProductionOrders.Any() ? orderDetails.ProductionOrders.Max(o => o.Shipments != null && o.Shipments.Any() ? o.Shipments.Count : 0) : 0;
                 Console.WriteLine($"{Path.GetFileNameWithoutExtension(pair.Item2)}\t{maxPoShipmentsCnt}");
             }
 
@@ -617,11 +620,12 @@ namespace Albelli.MiscUtils.CLI
             foreach (var queuUrl in queuesList.QueueUrls)
             {
                 var attrsJson = AWSCliRunner.CatchCMDOutput($"sqs get-queue-attributes --queue-url \"{queuUrl}\" --attribute-names All  --output json --cli-read-timeout 5 --cli-connect-timeout 5");
-                try {
+                try
+                {
                     dynamic attrs = JsonConvert.DeserializeObject(attrsJson);
                     Console.WriteLine($"{queuUrl}:{attrs?.Attributes?.ApproximateNumberOfMessages}");
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     Console.Error.WriteLine(ex);
                 }
@@ -657,9 +661,53 @@ namespace Albelli.MiscUtils.CLI
                 //System.IO.File.WriteAllText(outputTablePath, JsonConvert.SerializeObject(des, Formatting.Indented));
                 System.IO.File.WriteAllText(outputTablePath, DiscrepancyLogEntryPrinter.Print(des));
             }
-            PrintPCT9944Keys(nameof(diffs),diffs);
+            PrintPCT9944Keys(nameof(diffs), diffs);
             PrintPCT9944Keys(nameof(missing), missing);
             PrintPCT9944Keys(nameof(excessive), excessive);
+            PrintPCT9944FullDiffInfo(nameof(diffs), diffs);
+            return 0;
+        }
+
+        public static int AnalyzePCT9944NoDiscrepancies(string[] args)
+        {
+            var inputJsonPath = args[0];
+            var inputParams = JsonConvert.DeserializeObject<NoOrDiscrepancyLogsAnalyzeRequest>(System.IO.File.ReadAllText(inputJsonPath));
+            var outputTablePath = inputParams.OutputTablePath;
+
+            Dictionary<string, PCT9944FullDiffInfo> diffs = new();
+            List<NoDiscrepancyLogEntry> des = new();
+            foreach (var currLog in inputParams.Logs)
+            {
+                try
+                {
+
+                    string inputCsv = currLog;
+                    if (!string.IsNullOrWhiteSpace(inputParams.LogsDir) && Directory.Exists(inputParams.LogsDir))
+                        inputCsv = Path.Combine(inputParams.LogsDir, inputCsv);
+                    var dt = Tools.Csv2DataTable(inputCsv, ',', maxBufferSize: 102400);
+                    foreach (DataRow dr in dt.Rows)
+                    {
+                        string currMsg = dr["Message"] as string;
+                        string currCorrId = dr["X-CorrelationId"] as string;
+                        var dle = NoDiscrepancyLogEntryParser.Parse(currMsg);
+                        dle.XCorrelationId = currCorrId;
+                        if (dt.Columns.Contains($"@{nameof(dle.timestamp_cw)}"))
+                            dle.timestamp_cw = dr[$"@{nameof(dle.timestamp_cw)}"] as string;
+                        AccountForPCT9944(diffs, dle.Centiro, currCorrId, dle.Input);
+                        des.Add(dle);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"Error processing log '{currLog}':{ex}");
+                }
+            }
+            if (!string.IsNullOrWhiteSpace(outputTablePath))
+            {
+                System.IO.File.WriteAllText(outputTablePath, NoDiscrepancyLogEntryPrinter.Print(des, inputParams.PrintPayloadJson));
+            }
+
+            PrintPCT9944Keys(nameof(diffs), diffs);
             PrintPCT9944FullDiffInfo(nameof(diffs), diffs);
             return 0;
         }
@@ -669,7 +717,7 @@ namespace Albelli.MiscUtils.CLI
         {
             Console.WriteLine(new string('-', 33));
             Console.WriteLine($"{heading}:");
-            Console.WriteLine(JsonConvert.SerializeObject(diffs,Formatting.Indented));
+            Console.WriteLine(JsonConvert.SerializeObject(diffs, Formatting.Indented));
         }
 
         private static void PrintPCT9944Keys(string heading, Dictionary<string, PCT9944FullDiffInfo> diffs)
@@ -720,7 +768,7 @@ namespace Albelli.MiscUtils.CLI
                     // ds.Dispose();
                 }
                 DataRow[] rows = ds.Select(query, orderBy);
-                PrintDataRows(rows, ds);
+                ExcelUtils.PrintDataRows(rows, ds, Console.Out);
             }
             return 0;
         }
@@ -729,11 +777,11 @@ namespace Albelli.MiscUtils.CLI
         {
             string excelPath = args[0];
             string query = args[1];
-            string orderBy = args.Length > 2 ?  args[2] : string.Empty;
+            string orderBy = args.Length > 2 ? args[2] : string.Empty;
             using (DataTable ds = ExcelReader.Read(excelPath))
             {
                 DataRow[] rows = string.IsNullOrWhiteSpace(orderBy) ? ds.Select(query) : ds.Select(query, orderBy);
-                PrintDataRows(rows, ds);
+                ExcelUtils.PrintDataRows(rows, ds, Console.Out);
 
             }
             return 0;
@@ -751,10 +799,12 @@ namespace Albelli.MiscUtils.CLI
                 req_DLE = JsonConvert.DeserializeObject<DiscrepancyLogEntry>(System.IO.File.ReadAllText(inputJsonPath));
             }
             catch { }
-            try {
+            try
+            {
                 req_API = JsonConvert.DeserializeObject<AvailableCarriersRequestV2>(System.IO.File.ReadAllText(inputJsonPath));
-            } catch { }
-            
+            }
+            catch { }
+
             using (DataTable matrix = ExcelReader.Read(ACSSMatrixPath))
             using (DataTable zones = ExcelReader.Read(ACSSZonesPath))
             {
@@ -765,7 +815,7 @@ namespace Albelli.MiscUtils.CLI
                 var resp = filterer.Filter(ccm);
                 //Console.WriteLine(JsonConvert.SerializeObject(resp, Formatting.Indented));
                 Console.WriteLine($"{nameof(resp.PreFilterQuery)}:{resp.PreFilterQuery}");
-                resp.Candidates.ForEach(r => Console.WriteLine($"{r.MatrixRow.PK()}:{r.Verdict.ToString()}({string.Join(", ",r.NonMatchingFields)})\t{r.MatrixRow.Priority}"));
+                resp.Candidates.ForEach(r => Console.WriteLine($"{r.MatrixRow.PK()}:{r.Verdict.ToString()}({string.Join(", ", r.NonMatchingFields)})\t{r.MatrixRow.Priority}"));
             }
             return 0;
         }
@@ -827,7 +877,7 @@ namespace Albelli.MiscUtils.CLI
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Error processing row # {rowIdx}\t{ex.Message}\t{ex.StackTrace?.Replace("\n"," ")?.Replace("\r", "")}");
+                        Console.WriteLine($"Error processing row # {rowIdx}\t{ex.Message}\t{ex.StackTrace?.Replace("\n", " ")?.Replace("\r", "")}");
                     }
                     rowIdx++;
                 }
@@ -836,27 +886,155 @@ namespace Albelli.MiscUtils.CLI
             return 0;
         }
 
+        public static int PCT9944BulkRevalidate2(string[] args)
+        {
+            string srcXlsPath = args[0];
+            string srcXlsSheet = args[1];
+            string apiEndpointProd = args[2];
+            string apiAuthTokenProd = args[3];
+            string apiEndpointUat = args[4];
+            string apiAuthTokenUat = args[5];
+            string inputParamsJsonPath = args[6];
+            string debugFilterersArg = args.Length > 7 ? args[7] : string.Empty;
+
+            bool debugFilterers;
+            if (!bool.TryParse(debugFilterersArg, out debugFilterers))
+                debugFilterers = false;
+            //Console.WriteLine($"ts\tCentiroV1\tCentiroV2\tmatrixTopCandidate_Prod\tmatrixTopCandidate_Uat\tX-CorrelationId_Prod\tApiRespCandidateProd\tApiResponseCandidateUAT\tCentiroV2Req");
+            Console.WriteLine($"ts\tCentiroV1\tCentiroV2\tCentiroV2Count\tmatrixCandidates_Prod\tmatrixCandidates_Prod_Count\tmatrixCandidates_Uat\tX-CorrelationId_Prod\tApiRespCandidateProd\tApiResponseCandidateUAT\tCentiroV2Req");
+            Dictionary<string, Tuple<DataTable, DataTable>> matrixZonesByPlant_Prod = new();
+            Dictionary<string, Tuple<DataTable, DataTable>> matrixZonesByPlant_Uat = new();
+            var inputParams = JsonConvert.DeserializeObject<NoOrDiscrepancyLogsAnalyzeRequest>(System.IO.File.ReadAllText(inputParamsJsonPath));
+            var prodMatrixZones = inputParams.MatrixZonesByPlantPerEnv["prod"];
+            var uatMatrixZones = inputParams.MatrixZonesByPlantPerEnv["uat"];
+            foreach (string plantKey in prodMatrixZones.MatrixZonesPerPlant?.Keys)
+            {
+                matrixZonesByPlant_Prod.Add(plantKey, new Tuple<DataTable, DataTable>(ExcelReader.Read(prodMatrixZones.MatrixZonesPerPlant[plantKey].MatrixXlsPath), ExcelReader.Read(prodMatrixZones.MatrixZonesPerPlant[plantKey].ZonesXlsPath)));
+            }
+            if (uatMatrixZones.MatrixZonesPerPlant != null && true == uatMatrixZones.MatrixZonesPerPlant.Any()) 
+            {
+                foreach (string plantKey in uatMatrixZones.MatrixZonesPerPlant?.Keys)
+                {
+                    matrixZonesByPlant_Uat.Add(plantKey, new Tuple<DataTable, DataTable>(ExcelReader.Read(uatMatrixZones.MatrixZonesPerPlant[plantKey].MatrixXlsPath), ExcelReader.Read(uatMatrixZones.MatrixZonesPerPlant[plantKey].ZonesXlsPath)));
+                }
+            }
+
+            using (DataTable dtMain = ExcelReader.Read(srcXlsPath, srcXlsSheet))
+            {
+                int rowIdx = 0;
+                foreach (DataRow dr in dtMain.Rows)
+                {
+                    try
+                    {
+                        string JSON = dr[nameof(JSON)] as string;
+                        string CentiroV1 = dr[nameof(CentiroV1)] as string;
+                        string CentiroV2 = dr[nameof(CentiroV2)] as string;
+                        string PlantCode = dr[nameof(PlantCode)] as string;
+                        if (string.IsNullOrWhiteSpace(JSON) && string.IsNullOrWhiteSpace(CentiroV1) && string.IsNullOrWhiteSpace(CentiroV2))
+                            break;
+                        DiscrepancyLogEntry dle = JsonConvert.DeserializeObject<DiscrepancyLogEntry>(JSON);
+                        ACSSCandidatesFilterer filtererProd = new ACSSCandidatesFilterer(matrixZonesByPlant_Prod[PlantCode].Item1, matrixZonesByPlant_Prod[PlantCode].Item2) { Debug = debugFilterers };
+                        var filteredProd = filtererProd.Filter(dle?.ParsedInput);
+                        
+                        ACSSCandidatesFilteringResponse filteredUat = null;
+                        if (true == matrixZonesByPlant_Uat?.Any() && matrixZonesByPlant_Uat.ContainsKey(PlantCode))
+                        {
+                            ACSSCandidatesFilterer filtererUat = new ACSSCandidatesFilterer(matrixZonesByPlant_Uat[PlantCode].Item1, matrixZonesByPlant_Uat[PlantCode].Item2) { Debug = debugFilterers };
+                            filteredUat = filtererUat.Filter(dle?.ParsedInput);
+                        }
+                        var currApiCorrId = string.Empty;
+                        List<AvailableCarriersResponse> avCarrsProd = null;
+                        List<AvailableCarriersResponse> avCarrsUat = null;
+                        AvailableCarriersRequestV2 centiroV2Req = (AvailableCarriersRequestV2)dle.ParsedInput;
+                        string centiroV2ReqJson = JsonConvert.SerializeObject(centiroV2Req, Formatting.None);
+                        DateTime ts = DateTime.Now;
+                        if (!string.IsNullOrWhiteSpace(apiEndpointProd) && !string.IsNullOrWhiteSpace(apiAuthTokenProd))
+                        {
+                            currApiCorrId = Guid.NewGuid().ToString();
+                            var corrIdExreHdrs = new Dictionary<string, string>() { { "X-CorrelationId", currApiCorrId } };
+                            var centiroResponseProd = ApiUtility.Post(apiEndpointProd, apiAuthTokenProd, centiroV2ReqJson, corrIdExreHdrs);
+                            if (centiroResponseProd.Item1 == HttpStatusCode.OK)
+                            {
+                                avCarrsProd = JsonConvert.DeserializeObject<List<AvailableCarriersResponse>>(centiroResponseProd.Item2);
+                            }
+                        }
+                        if (!string.IsNullOrWhiteSpace(apiEndpointUat) && !string.IsNullOrWhiteSpace(apiAuthTokenUat))
+                        {
+                            var centiroResponseUat = ApiUtility.Post(apiEndpointUat, apiAuthTokenUat, centiroV2ReqJson, null);///corrIdExreHdrs
+
+                            if (centiroResponseUat.Item1 == HttpStatusCode.OK)
+                            {
+                                avCarrsUat = JsonConvert.DeserializeObject<List<AvailableCarriersResponse>>(centiroResponseUat.Item2);
+                            }
+                        }
+                        var matrixTopCandidate_Prod = filteredProd?.Candidates?.Where(c => c.Verdict == ACSSFilteringVerdict.Served)?.FirstOrDefault();
+                        var matrixCandidates_Prod = filteredProd?.Candidates?.Where(c => c.Verdict == ACSSFilteringVerdict.Served)?.ToList()?.Select(c => c.MatrixRow.PK())?.ToArray();
+                        var matrixTopCandidate_Uat = filteredUat?.Candidates?.Where(c => c.Verdict == ACSSFilteringVerdict.Served)?.FirstOrDefault();
+                        var matrixCandidates_Uat = filteredUat?.Candidates?.Where(c => c.Verdict == ACSSFilteringVerdict.Served)?.ToList()?.Select(c => c.MatrixRow.PK())?.ToArray();
+                        
+                        //Console.WriteLine($"{ts:s}\t{CentiroV1}\t{CentiroV2}\t{matrixTopCandidate_Prod?.MatrixRow?.PK()}\t{matrixTopCandidate_Uat?.MatrixRow?.PK()}\t{currApiCorrId}\t{avCarrsProd?.FirstOrDefault()?.PK()}\t{avCarrsUat?.FirstOrDefault()?.PK()}\t{centiroV2ReqJson}");
+                        Console.WriteLine($"{ts:s}\t{CentiroV1}\t{CentiroV2}\t{CentiroV2.Split(',').Length}\t{IEnumerableToString(matrixCandidates_Prod)}\t{matrixCandidates_Prod?.Count()}\t{IEnumerableToString(matrixCandidates_Uat)}\t{currApiCorrId}\t{avCarrsProd?.FirstOrDefault()?.PK()}\t{avCarrsUat?.FirstOrDefault()?.PK()}\t{centiroV2ReqJson}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error processing row # {rowIdx}\t{ex.Message}\t{ex.StackTrace?.Replace("\n", " ")?.Replace("\r", "")}");
+                    }
+                    rowIdx++;
+                }
+            }
+
+            return 0;
+        }
+
+        private static string IEnumerableToString(IEnumerable<string> list)
+        {
+            return true != list?.Any() ? string.Empty : string.Join(", ", list);
+        }
         public static int PCT9944BulkRevalidateChecker(string[] args)
         {
             string bulkReValidateOutputPath = args[0];
             //string 
             return 0;
         }
-        private static void PrintDataRows(DataRow[] rows, DataTable ds)
-        {
-            foreach (DataRow dr in rows)
-            {
-                for(int c=0; c< ds.Columns.Count; c++)
-                {
-                    if (c > 0)
-                        Console.Write('\t');
-                    Console.Write(dr[c] as string);
 
+        public static int RequestJsonSerializationSample(string[] args)
+        {
+            string[] envs = { "prod", "uat" };
+            NoOrDiscrepancyLogsAnalyzeRequest req = new NoOrDiscrepancyLogsAnalyzeRequest();
+            req.MatrixZonesByPlantPerEnv = new();
+            foreach (var env in envs)
+            {
+                req.MatrixZonesByPlantPerEnv.Add(env, new MatrixZonesPerEnvConfig());
+                req.MatrixZonesByPlantPerEnv[env].MatrixZonesPerPlant = new();
+                req.MatrixZonesByPlantPerEnv[env].MatrixZonesPerPlant.Add("YPB", new MatrixZoneConfig()
+                {
+                    MatrixXlsPath = $"matrix_nl_{env}.xls",
+                    ZonesXlsPath = $"zones_nl_{env}.xls"
                 }
-                Console.WriteLine();
+                );
+                req.MatrixZonesByPlantPerEnv[env].MatrixZonesPerPlant.Add("WFR", new MatrixZoneConfig()
+                {
+                    MatrixXlsPath = $"matrix_wfr_{env}.xls",
+                    ZonesXlsPath = $"zones_wfr_{env}.xls"
+                }
+                );
             }
+
+            Console.WriteLine(JsonConvert.SerializeObject(req, Formatting.Indented));
+            Console.Read();
+            return 0;
         }
 
+
+        public static int IsZipBetween(string[] args)
+        {
+            Console.WriteLine("97100-97699, 97101" + ACSSCandidatesFilterer.IsZipBetween("97101", "97100", "97699"));
+            Console.WriteLine("98400-98499, 98500" + ACSSCandidatesFilterer.IsZipBetween("98500", "98400", "98499"));
+            Console.WriteLine("98600-98899, 97000" + ACSSCandidatesFilterer.IsZipBetween("97000", "98600", "98899"));
+            Console.WriteLine("00000-97099, 00001" + ACSSCandidatesFilterer.IsZipBetween("00001", "00000", "97099"));
+            Console.WriteLine("00000-97099, 99999" + ACSSCandidatesFilterer.IsZipBetween("99999", "00000", "97099"));
+            return 0;
+        }
         #endregion
 
         #endregion

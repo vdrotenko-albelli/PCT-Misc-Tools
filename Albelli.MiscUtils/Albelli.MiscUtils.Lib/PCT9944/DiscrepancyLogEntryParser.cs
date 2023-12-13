@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Albelli.MiscUtils.Lib.PCT9944
@@ -22,11 +23,27 @@ namespace Albelli.MiscUtils.Lib.PCT9944
                 CentiroV2 = ExtractV2(currMsgLns),
                 Missing = ExtractPCT9944Missing(currMsgLns),
                 Excessive = ExtractPCT9944Excessive(currMsgLns)
-
             };
-            //rslt.Plant = CalculateCarrierModelParser.ParsePlantCode(rslt.Input);
+            Tuple<int, int> counts = ExtractV1V2Counts(currMsgLns[1]);
+            rslt.V1Count = counts.Item1;
+            rslt.V2Count = counts.Item2;
             return rslt;
         }
+
+        private static Tuple<int, int> ExtractV1V2Counts(string msgLn)
+        {
+            int v1 = 0;
+            int v2 = 0;
+            Regex rgx = new Regex("Centiro\\(V1\\) ([0-9]+) options vs ([0-9]+) in Centiro\\(V2\\)");
+            var match = rgx.Match(msgLn);
+            if (match.Success && match.Groups.Count == 3)
+            {
+                v1 = int.Parse(match.Groups[1].ToString());
+                v2 = int.Parse(match.Groups[2].ToString());
+            }
+            return new Tuple<int, int>(v1, v2);
+        }
+
         private static string ExtractPCT9944Input(string[] currMsg)
         {
             var rslt = ExtractSmcDelimValue(currMsg, 0).Trim().Substring(1);

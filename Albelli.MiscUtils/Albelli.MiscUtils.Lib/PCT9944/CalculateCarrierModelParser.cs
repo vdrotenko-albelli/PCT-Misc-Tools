@@ -9,13 +9,13 @@
             //"YPB/bonusprint => MT/'VCT1102', Box LxWxH: 440 x 330 x 160mm / 1743g, ArticleTypes: empty, DeliveryTypes: Standard, Express",
             CalculateCarrierModel rslt = new CalculateCarrierModel();
             rslt.PlantCode = ParsePlantCode(input);
-            if (string.IsNullOrWhiteSpace(rslt.PlantCode)) return rslt;
+            //if (string.IsNullOrWhiteSpace(rslt.PlantCode)) return rslt;
             rslt.Brand = ParseBrand(input);
-            if (string.IsNullOrWhiteSpace(rslt.Brand)) return rslt;
+            //if (string.IsNullOrWhiteSpace(rslt.Brand)) return rslt;
             rslt.CountryId = ParseCountryId(input);
-            if (string.IsNullOrWhiteSpace(rslt.CountryId)) return rslt;
+            //if (string.IsNullOrWhiteSpace(rslt.CountryId)) return rslt;
             rslt.ZipCode = ParseZipCode(input);
-            if (string.IsNullOrWhiteSpace(rslt.ZipCode)) return rslt;
+            //if (string.IsNullOrWhiteSpace(rslt.ZipCode)) return rslt;
             rslt.Package = ParsePackage(input);
             //if (rslt.Package == null) return rslt;
             rslt.ArticleTypes = ParseArticleTypes(input);

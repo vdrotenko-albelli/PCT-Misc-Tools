@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Albelli.MiscUtils.CLI": {
+      "commandName": "Project",
+      "commandLineArgs": "IsZipBetween"
+    }
+  }
+}

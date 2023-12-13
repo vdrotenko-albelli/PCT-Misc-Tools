@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Primitives;
+﻿using Albelli.MiscUtils.Lib.Excel;
+using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -12,7 +13,12 @@ namespace Albelli.MiscUtils.Lib.PCT9944
     {
         private DataTable _matrixTable;
         private DataTable _zonesTable;
-        public ACSSCandidatesFilterer(DataTable matrixTable, DataTable zonesTable)
+        public bool Debug { get; set; }
+        private ACSSCandidatesFilterer() 
+        {
+            Debug = false;
+        }
+        public ACSSCandidatesFilterer(DataTable matrixTable, DataTable zonesTable) :this()
         {
             _matrixTable = matrixTable;
             _zonesTable = zonesTable;
@@ -25,15 +31,38 @@ namespace Albelli.MiscUtils.Lib.PCT9944
             if (candidates == null || candidates.Length == 0 ) return rslt;
             foreach(DataRow row in candidates)
             {
-                rslt.Add((row["ZoneCode"] as string)?.Trim());
+                string startZip = (row["From"] as string)?.Trim();
+                string endZip = (row["To"] as string)?.Trim();
+                string zoneCode = (row["ZoneCode"] as string)?.Trim();
+                if (IsAnyOrNoZip(startZip) || IsAnyOrNoZip(endZip))
+                    rslt.Add(zoneCode);
+                else if (IsZipBetween(request.ZipCode, startZip, endZip))
+                    rslt.Add(zoneCode);
             }
-            return rslt;
+            return rslt.Distinct().ToList();
+        }
+
+        public static bool IsZipBetween(string zipCode, string startZip, string endZip)
+        {
+            return string.Compare(startZip, zipCode) <=0 && string.Compare(endZip, zipCode) >=0;
+        }
+
+        private bool IsAnyOrNoZip(string zipColVal)
+        {
+            return string.IsNullOrWhiteSpace(zipColVal) || zipColVal == "*";
+        }
+        private string DbgPfx(string methodName)
+        {
+            return $"{nameof(ACSSCandidatesFilterer)}.{methodName}";
         }
         public ACSSCandidatesFilteringResponse Filter(CalculateCarrierModel request)
         {
+            if (Debug) Console.WriteLine($"{DbgPfx(nameof(Filter))}({request})");
             ACSSCandidatesFilteringResponse rslt = new();
             rslt.PreFilterQuery = GeneratePreFilterQuery(request);
+            if (Debug) Console.WriteLine($"{DbgPfx(nameof(Filter))}::{nameof(rslt.PreFilterQuery)}: '{rslt.PreFilterQuery}'");
             DataRow[] candidates = PreFilter(rslt.PreFilterQuery);
+            if (Debug) { Console.WriteLine($"{DbgPfx(nameof(Filter))}::{nameof(candidates)}:"); ExcelUtils.PrintDataRows(candidates, _matrixTable, Console.Out); }
             if (candidates == null || candidates.Length == 0) return rslt;
             List<ACSSMatrixEntry> matrixEntries = new();
             foreach(DataRow dr in candidates)
@@ -42,7 +71,9 @@ namespace Albelli.MiscUtils.Lib.PCT9944
             }
             foreach (var me in matrixEntries)
             {
-                rslt.Candidates.Add(EvaluateCandidate(me, request));
+                var evalRslt = EvaluateCandidate(me, request);
+                if (Debug) { Console.WriteLine($"{DbgPfx(nameof(Filter))}::{nameof(evalRslt)}({me.PK()}):{evalRslt}"); }
+                rslt.Candidates.Add(evalRslt);
             }
             return rslt;
         }
@@ -71,6 +102,7 @@ namespace Albelli.MiscUtils.Lib.PCT9944
             {
                 case "L+W+H": calcDims = package.LengthInMm+ package.WidthInMm + package.HeightInMm; break;
                 case "L+2D": calcDims = package.LengthInMm + 2*package.WidthInMm; break;
+                case "L+2W+2H": calcDims = package.LengthInMm + 2 * package.WidthInMm + 2*package.HeightInMm; break;
                 default:
                     return $"Unsupported {nameof(calculationType)}:'{calculationType}'.";
             }

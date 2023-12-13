@@ -8,6 +8,13 @@ namespace Albelli.MiscUtils.Lib.PCT9944
 {
     public class CalculateCarrierModel
     {
+        public CalculateCarrierModel() {
+            ArticleTypes = new string[] { };
+            DeliveryMethods = new string[] { };
+            DeliveryTypes = new string[] { };
+
+        }
+
         public string PlantCode { get; set; }
         public int DealerId { get; set; }
         public string Brand { get; set; }
@@ -77,8 +84,16 @@ namespace Albelli.MiscUtils.Lib.PCT9944
             rslt.PlantCode = model.PlantCode;
             return rslt;
         }
+        private string IEnumerableToString(IEnumerable<string> values)
+        {
+            return true != values?.Any() ? "empty" : string.Join(",", values);
+        }
+        public override string ToString()
+        {
+            return $"{PlantCode}/{Brand} => {CountryId}/'{ZipCode}', {Package.Type} LxWxH: {Package.LengthInMm} x {Package.WidthInMm} x {Package.HeightInMm}mm / {Package.WeightInGrams}g, {nameof(ArticleTypes)}: {IEnumerableToString(ArticleTypes)}, {nameof(DeliveryTypes)}: {IEnumerableToString(DeliveryTypes)}";
+        }
 
-}
+    }
 
 
 }

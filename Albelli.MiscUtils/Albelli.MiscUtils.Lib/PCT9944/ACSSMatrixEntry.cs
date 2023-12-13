@@ -63,17 +63,30 @@ namespace Albelli.MiscUtils.Lib.PCT9944
             NetworkID = dr["Network ID"] as string;
             CarrierCodeLetter = dr["Carrier Code Letter"] as string;
             CarrierServiceKey = dr["Carrier Service Key"] as string;
-            ShipmentPriceIncludeVat = bool.Parse(dr["Shipment Price Include Vat"] as string);
-            ShipmentPriceIncludesShippingCost = bool.Parse(dr["Shipment Price Includes Shipping Cost"] as string);
+            ShipmentPriceIncludeVat = TryParseVariousBool(dr["Shipment Price Include Vat"] as string, false);
+            ShipmentPriceIncludesShippingCost = TryParseVariousBool(dr["Shipment Price Includes Shipping Cost"] as string, false);
             PackageLabel = dr["Package Label"] as string;
             IsLetterbox = dr["IsLetterbox"] as string;
             Currency = dr["Currency"] as string;
             ImportTaxRatio = double.Parse(dr["Import Tax Ratio"] as string);
         }
 
+        private bool TryParseVariousBool(string? val, bool defaultTo)
+        {
+            if (string.IsNullOrWhiteSpace(val)) return defaultTo;
+            bool rslt;
+            if (bool.TryParse(val.ToLower(), out rslt)) return rslt;
+            int irslt;
+            if (int.TryParse(val, out irslt)) return irslt != 0;
+            return false;
+        }
+
         public string PK()
         {
-            return $"{PackageLabel}/{CarrierServiceKey}-{DeliveryMethod}/{CarrierServiceType}-'{CarrierCodeLetter}'";
+            var rslt = $"{PackageLabel}/{CarrierServiceKey}-{DeliveryMethod}/{CarrierServiceType}";
+            if (!string.IsNullOrWhiteSpace(CarrierCodeLetter))
+                rslt = $"{rslt}-'{CarrierCodeLetter}'";
+            return rslt;
         }
     }
 }
