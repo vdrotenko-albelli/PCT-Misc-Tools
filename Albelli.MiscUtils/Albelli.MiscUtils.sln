@@ -3,9 +3,16 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33530.505
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Albelli.MiscUtils.CLI", "Albelli.MiscUtils.CLI\Albelli.MiscUtils.CLI.csproj", "{D544B296-4640-4780-8BC6-97DEBC290462}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Albelli.MiscUtils.CLI", "Albelli.MiscUtils.CLI\Albelli.MiscUtils.CLI.csproj", "{D544B296-4640-4780-8BC6-97DEBC290462}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Albelli.MiscUtils.Lib", "Albelli.MiscUtils.Lib\Albelli.MiscUtils.Lib.csproj", "{E1248DCB-3024-4D84-9BEA-D48D6F22B786}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Albelli.MiscUtils.Lib", "Albelli.MiscUtils.Lib\Albelli.MiscUtils.Lib.csproj", "{E1248DCB-3024-4D84-9BEA-D48D6F22B786}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Albelli.MiscUtils.Lib.Tests", "Albelli.MiscUtils.Lib.Tests\Albelli.MiscUtils.Lib.Tests.csproj", "{991BA1FA-685B-4AA3-8AB1-47FB964C4968}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B82BBAC1-0EFB-4B6F-899D-8417A6258B26}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +28,10 @@ Global
 		{E1248DCB-3024-4D84-9BEA-D48D6F22B786}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E1248DCB-3024-4D84-9BEA-D48D6F22B786}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E1248DCB-3024-4D84-9BEA-D48D6F22B786}.Release|Any CPU.Build.0 = Release|Any CPU
+		{991BA1FA-685B-4AA3-8AB1-47FB964C4968}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{991BA1FA-685B-4AA3-8AB1-47FB964C4968}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{991BA1FA-685B-4AA3-8AB1-47FB964C4968}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{991BA1FA-685B-4AA3-8AB1-47FB964C4968}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
