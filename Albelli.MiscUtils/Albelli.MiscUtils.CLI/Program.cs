@@ -3,6 +3,7 @@ using Albelli.MiscUtils.Lib.AWSCli;
 using Albelli.MiscUtils.Lib.ESLogs;
 using Albelli.MiscUtils.Lib.Excel;
 using Albelli.MiscUtils.Lib.PCT9944;
+using Centiro.PromiseEngine.Client;
 using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json;
 using ProductionOrderOperationsApi;
@@ -638,27 +639,18 @@ namespace Albelli.MiscUtils.CLI
             var inputCsv = args[0];
             var plantOnly = args.Length > 1 && !string.IsNullOrWhiteSpace(args[1]) ? args[1] : string.Empty;
             var outputTablePath = args.Length > 2 && !string.IsNullOrWhiteSpace(args[2]) ? args[2] : string.Empty;
-            var dt = Tools.Csv2DataTable(inputCsv, ',', maxBufferSize: 102400);
             Dictionary<string, PCT9944FullDiffInfo> diffs = new();
             Dictionary<string, PCT9944FullDiffInfo> missing = new();
             Dictionary<string, PCT9944FullDiffInfo> excessive = new();
-            List<DiscrepancyLogEntry> des = new();
-            foreach (DataRow dr in dt.Rows)
+            List<DiscrepancyLogEntry> des = PCT9944DiscrepanciesLogReader.Read(inputCsv);
+            foreach(DiscrepancyLogEntry dle in des)
             {
-                string currMsg = dr["Message"] as string;
-                string currCorrId = dr["X-CorrelationId"] as string;
-                var dle = DiscrepancyLogEntryParser.Parse(currMsg);
-                dle.XCorrelationId = currCorrId;
-                if (dt.Columns.Contains($"@{nameof(dle.timestamp_cw)}"))
-                    dle.timestamp_cw = dr[$"@{nameof(dle.timestamp_cw)}"] as string;
-                AccountForPCT9944(diffs, dle.DiffStr, currCorrId, dle.Input);
-                AccountForPCT9944(missing, dle.Missing, currCorrId, dle.Input);
-                AccountForPCT9944(excessive, dle.Excessive, currCorrId, dle.Input);
-                des.Add(dle);
+                AccountForPCT9944(diffs, dle.DiffStr, dle.XCorrelationId, dle.Input);
+                AccountForPCT9944(missing, dle.Missing, dle.XCorrelationId, dle.Input);
+                AccountForPCT9944(excessive, dle.Excessive, dle.XCorrelationId, dle.Input);
             }
             if (!string.IsNullOrWhiteSpace(outputTablePath))
             {
-                //System.IO.File.WriteAllText(outputTablePath, JsonConvert.SerializeObject(des, Formatting.Indented));
                 System.IO.File.WriteAllText(outputTablePath, DiscrepancyLogEntryPrinter.Print(des));
             }
             PrintPCT9944Keys(nameof(diffs), diffs);
@@ -901,7 +893,7 @@ namespace Albelli.MiscUtils.CLI
             if (!bool.TryParse(debugFilterersArg, out debugFilterers))
                 debugFilterers = false;
             //Console.WriteLine($"ts\tCentiroV1\tCentiroV2\tmatrixTopCandidate_Prod\tmatrixTopCandidate_Uat\tX-CorrelationId_Prod\tApiRespCandidateProd\tApiResponseCandidateUAT\tCentiroV2Req");
-            Console.WriteLine($"ts\tCentiroV1\tCentiroV2\tCentiroV2Count\tmatrixCandidates_Prod\tmatrixCandidates_Prod_Count\tmatrixCandidates_Uat\tX-CorrelationId_Prod\tApiRespCandidateProd\tApiResponseCandidateUAT\tCentiroV2Req");
+            Console.WriteLine($"ts\tCentiroV1\tCentiroV2\tCentiroV2Count\tmatrixCandidates_Prod\tmatrixCandidates_Prod_Count\tmatrixCandidates_Uat\tmatrixCandidates_Uat_Count\ttopMatrixCandidate_Prod\ttopMatrixCandidate_Uat\tX-CorrelationId_Prod\tApiRespCandidateProd\tApiResponseCandidateUAT\tShipping-Carrier-Api_request\tCentiroV2Req");
             Dictionary<string, Tuple<DataTable, DataTable>> matrixZonesByPlant_Prod = new();
             Dictionary<string, Tuple<DataTable, DataTable>> matrixZonesByPlant_Uat = new();
             var inputParams = JsonConvert.DeserializeObject<NoOrDiscrepancyLogsAnalyzeRequest>(System.IO.File.ReadAllText(inputParamsJsonPath));
@@ -945,9 +937,14 @@ namespace Albelli.MiscUtils.CLI
                         var currApiCorrId = string.Empty;
                         List<AvailableCarriersResponse> avCarrsProd = null;
                         List<AvailableCarriersResponse> avCarrsUat = null;
-                        AvailableCarriersRequestV2 centiroV2Req = (AvailableCarriersRequestV2)dle.ParsedInput;
-                        string centiroV2ReqJson = JsonConvert.SerializeObject(centiroV2Req, Formatting.None);
+                        AvailableCarriersRequestV2 centiroV2ReqOurs = (AvailableCarriersRequestV2)dle.ParsedInput;
+                        string centiroV2ReqJson = JsonConvert.SerializeObject(centiroV2ReqOurs, Formatting.None);
                         DateTime ts = DateTime.Now;
+                        GetOptionsRequest trueCentiroV2Req =  new GetOptionsRequest
+                        {
+                            MessageId = Guid.NewGuid(),
+                            Deliveries = new List<DeliveryRequest> { dle.ParsedInput.ToDeliveryRequest().ToCentiroModel() }
+                        };
                         if (!string.IsNullOrWhiteSpace(apiEndpointProd) && !string.IsNullOrWhiteSpace(apiAuthTokenProd))
                         {
                             currApiCorrId = Guid.NewGuid().ToString();
@@ -971,9 +968,10 @@ namespace Albelli.MiscUtils.CLI
                         var matrixCandidates_Prod = filteredProd?.Candidates?.Where(c => c.Verdict == ACSSFilteringVerdict.Served)?.ToList()?.Select(c => c.MatrixRow.PK())?.ToArray();
                         var matrixTopCandidate_Uat = filteredUat?.Candidates?.Where(c => c.Verdict == ACSSFilteringVerdict.Served)?.FirstOrDefault();
                         var matrixCandidates_Uat = filteredUat?.Candidates?.Where(c => c.Verdict == ACSSFilteringVerdict.Served)?.ToList()?.Select(c => c.MatrixRow.PK())?.ToArray();
-                        
+
                         //Console.WriteLine($"{ts:s}\t{CentiroV1}\t{CentiroV2}\t{matrixTopCandidate_Prod?.MatrixRow?.PK()}\t{matrixTopCandidate_Uat?.MatrixRow?.PK()}\t{currApiCorrId}\t{avCarrsProd?.FirstOrDefault()?.PK()}\t{avCarrsUat?.FirstOrDefault()?.PK()}\t{centiroV2ReqJson}");
-                        Console.WriteLine($"{ts:s}\t{CentiroV1}\t{CentiroV2}\t{CentiroV2.Split(',').Length}\t{IEnumerableToString(matrixCandidates_Prod)}\t{matrixCandidates_Prod?.Count()}\t{IEnumerableToString(matrixCandidates_Uat)}\t{currApiCorrId}\t{avCarrsProd?.FirstOrDefault()?.PK()}\t{avCarrsUat?.FirstOrDefault()?.PK()}\t{centiroV2ReqJson}");
+                        var trueCentiroV2ReqJson = JsonConvert.SerializeObject(trueCentiroV2Req, Formatting.None);
+                        Console.WriteLine($"{ts:s}\t{CentiroV1}\t{CentiroV2}\t{CentiroV2.Split(',').Length}\t{IEnumerableToString(matrixCandidates_Prod)}\t{matrixCandidates_Prod?.Count()}\t{IEnumerableToString(matrixCandidates_Uat)}\t{matrixCandidates_Uat?.Count()}\t{matrixCandidates_Prod?.FirstOrDefault()}\t{matrixCandidates_Uat?.FirstOrDefault()}\t{currApiCorrId}\t{avCarrsProd?.FirstOrDefault()?.PK()}\t{avCarrsUat?.FirstOrDefault()?.PK()}\t{centiroV2ReqJson}\t{trueCentiroV2ReqJson}");
                     }
                     catch (Exception ex)
                     {
@@ -1025,7 +1023,6 @@ namespace Albelli.MiscUtils.CLI
             return 0;
         }
 
-
         public static int IsZipBetween(string[] args)
         {
             Console.WriteLine("97100-97699, 97101" + ACSSCandidatesFilterer.IsZipBetween("97101", "97100", "97699"));
@@ -1035,6 +1032,41 @@ namespace Albelli.MiscUtils.CLI
             Console.WriteLine("00000-97099, 99999" + ACSSCandidatesFilterer.IsZipBetween("99999", "00000", "97099"));
             return 0;
         }
+
+        public static int PCT9944CompareDiscrepanciesSets(string[] args)
+        {
+            string discrLogPath1 = args[0];
+            string discrLogPath2 = args[1];
+            var dles1 = PCT9944DiscrepanciesLogReader.Read(discrLogPath1);
+            var dles2 = PCT9944DiscrepanciesLogReader.Read(discrLogPath2);
+            var inputsIntersection = dles1.Where(d => !string.IsNullOrWhiteSpace(d.Input)).Select(d => d.Input).Intersect(dles2.Where(d => !string.IsNullOrWhiteSpace(d.Input)).Select(d => d.Input)).ToList();
+            var diffsIntersection = dles1.Where(d => !string.IsNullOrWhiteSpace(d.DiffStr)).Select(d => d.DiffStr).Intersect(dles2.Where(d => !string.IsNullOrWhiteSpace(d.DiffStr)).Select(d => d.DiffStr)).ToList();
+            var newInputs = dles2.Where(d => !string.IsNullOrWhiteSpace(d.Input)).Select(d => d.Input).Except(dles1.Where(d => !string.IsNullOrWhiteSpace(d.Input)).Select(d => d.Input)).ToList();
+            var newDiffs = dles2.Where(d => !string.IsNullOrWhiteSpace(d.DiffStr)).Select(d => d.DiffStr).Except(dles1.Where(d => !string.IsNullOrWhiteSpace(d.DiffStr)).Select(d => d.DiffStr)).ToList();
+            if (inputsIntersection.Any())
+            {
+                Console.WriteLine(nameof(inputsIntersection));
+                inputsIntersection.ForEach(i => Console.WriteLine($"  {i}"));
+            }
+            if (diffsIntersection.Any())
+            {
+                Console.WriteLine(nameof(diffsIntersection));
+                diffsIntersection.ForEach(i => Console.WriteLine($"  {i}"));
+            }
+            if (newInputs.Any())
+            {
+                Console.WriteLine(nameof(newInputs));
+                newInputs.ForEach(i => Console.WriteLine($"  {i}"));
+            }
+            if (newDiffs.Any())
+            {
+                Console.WriteLine(nameof(newDiffs));
+                newDiffs.ForEach(i => Console.WriteLine($"  {i}"));
+            }
+
+            return 0;
+        }
+
         #endregion
 
         #endregion
