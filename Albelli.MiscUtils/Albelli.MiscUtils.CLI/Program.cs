@@ -2,6 +2,7 @@
 using Albelli.MiscUtils.Lib.AWSCli;
 using Albelli.MiscUtils.Lib.ESLogs;
 using Albelli.MiscUtils.Lib.Excel;
+using Albelli.MiscUtils.Lib.PCT10679;
 using Albelli.MiscUtils.Lib.PCT9944;
 using Centiro.PromiseEngine.Client;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -672,21 +673,17 @@ namespace Albelli.MiscUtils.CLI
             {
                 try
                 {
-
+                    
                     string inputCsv = currLog;
+                    
                     if (!string.IsNullOrWhiteSpace(inputParams.LogsDir) && Directory.Exists(inputParams.LogsDir))
                         inputCsv = Path.Combine(inputParams.LogsDir, inputCsv);
-                    var dt = Tools.Csv2DataTable(inputCsv, ',', maxBufferSize: 102400);
-                    foreach (DataRow dr in dt.Rows)
+                    var currNDLEs = PCT9944DiscrepanciesLogReader.ReadNoDiscrepancies(inputCsv);
+
+                    foreach (var ndle in currNDLEs)
                     {
-                        string currMsg = dr["Message"] as string;
-                        string currCorrId = dr["X-CorrelationId"] as string;
-                        var dle = NoDiscrepancyLogEntryParser.Parse(currMsg);
-                        dle.XCorrelationId = currCorrId;
-                        if (dt.Columns.Contains($"@{nameof(dle.timestamp_cw)}"))
-                            dle.timestamp_cw = dr[$"@{nameof(dle.timestamp_cw)}"] as string;
-                        AccountForPCT9944(diffs, dle.Centiro, currCorrId, dle.Input);
-                        des.Add(dle);
+                        AccountForPCT9944(diffs, ndle.Centiro, ndle.XCorrelationId, ndle.Input);
+                        des.Add(ndle);
                     }
                 }
                 catch (Exception ex)
@@ -699,6 +696,12 @@ namespace Albelli.MiscUtils.CLI
                 System.IO.File.WriteAllText(outputTablePath, NoDiscrepancyLogEntryPrinter.Print(des, inputParams.PrintPayloadJson));
             }
 
+            var stats = des.GroupBy(e => e.ParsedInput.PlantCode).Select(grp => new { PlantCode = grp.Key, Count = grp.Count() }).ToList();
+            //Console.WriteLine(JsonConvert.SerializeObject(stats, Formatting.Indented));
+            Console.WriteLine($"PlantCode\tCount");
+            stats.ForEach(s => Console.WriteLine($"{s.PlantCode}\t{s.Count}"));
+            var missingPlants = inputParams.AllPlantCodes.Except(stats.Select(s => s.PlantCode).ToList());
+            Console.WriteLine($"Missing plant(s): [{string.Join(',', missingPlants)}]");
             PrintPCT9944Keys(nameof(diffs), diffs);
             PrintPCT9944FullDiffInfo(nameof(diffs), diffs);
             return 0;
@@ -851,13 +854,13 @@ namespace Albelli.MiscUtils.CLI
                         AvailableCarriersRequestV2 centiroV2Req = (AvailableCarriersRequestV2)dle.ParsedInput;
                         string centiroV2ReqJson = JsonConvert.SerializeObject(centiroV2Req, Formatting.None);
                         DateTime ts = DateTime.Now;
-                        var centiroResponseProd = ApiUtility.Post(apiEndpointProd, apiAuthTokenProd, centiroV2ReqJson, corrIdExreHdrs);///corrIdExreHdrs
+                        var centiroResponseProd = ApiUtility.Post(apiEndpointProd, apiAuthTokenProd, centiroV2ReqJson, corrIdExreHdrs);///corrIdExreHdrs_Prod
                         List<AvailableCarriersResponse> avCarrsProd = null;
                         if (centiroResponseProd.Item1 == HttpStatusCode.OK)
                         {
                             avCarrsProd = JsonConvert.DeserializeObject<List<AvailableCarriersResponse>>(centiroResponseProd.Item2);
                         }
-                        var centiroResponseUat = ApiUtility.Post(apiEndpointUat, apiAuthTokenUat, centiroV2ReqJson, null);///corrIdExreHdrs
+                        var centiroResponseUat = ApiUtility.Post(apiEndpointUat, apiAuthTokenUat, centiroV2ReqJson, null);///corrIdExreHdrs_Prod
                         List<AvailableCarriersResponse> avCarrsUat = null;
                         if (centiroResponseUat.Item1 == HttpStatusCode.OK)
                         {
@@ -893,7 +896,7 @@ namespace Albelli.MiscUtils.CLI
             if (!bool.TryParse(debugFilterersArg, out debugFilterers))
                 debugFilterers = false;
             //Console.WriteLine($"ts\tCentiroV1\tCentiroV2\tmatrixTopCandidate_Prod\tmatrixTopCandidate_Uat\tX-CorrelationId_Prod\tApiRespCandidateProd\tApiResponseCandidateUAT\tCentiroV2Req");
-            Console.WriteLine($"ts\tCentiroV1\tCentiroV2\tCentiroV2Count\tmatrixCandidates_Prod\tmatrixCandidates_Prod_Count\tmatrixCandidates_Uat\tmatrixCandidates_Uat_Count\ttopMatrixCandidate_Prod\ttopMatrixCandidate_Uat\tX-CorrelationId_Prod\tApiRespCandidateProd\tApiResponseCandidateUAT\tShipping-Carrier-Api_request\tCentiroV2Req");
+            Console.WriteLine($"ts\tCentiroV1\tCentiroV2\tCentiroV2Count\tmatrixCandidates_Prod\tmatrixCandidates_Prod_Count\tmatrixCandidates_Uat\tmatrixCandidates_Uat_Count\ttopMatrixCandidate_Prod\ttopMatrixCandidate_Uat\tX-CorrelationId_Prod\tX-CorrelationId_Uat\tApiRespCandidateProd\tApiResponseCandidateUAT\tShipping-Carrier-Api_request\tCentiroV2Req");
             Dictionary<string, Tuple<DataTable, DataTable>> matrixZonesByPlant_Prod = new();
             Dictionary<string, Tuple<DataTable, DataTable>> matrixZonesByPlant_Uat = new();
             var inputParams = JsonConvert.DeserializeObject<NoOrDiscrepancyLogsAnalyzeRequest>(System.IO.File.ReadAllText(inputParamsJsonPath));
@@ -934,7 +937,8 @@ namespace Albelli.MiscUtils.CLI
                             ACSSCandidatesFilterer filtererUat = new ACSSCandidatesFilterer(matrixZonesByPlant_Uat[PlantCode].Item1, matrixZonesByPlant_Uat[PlantCode].Item2) { Debug = debugFilterers };
                             filteredUat = filtererUat.Filter(dle?.ParsedInput);
                         }
-                        var currApiCorrId = string.Empty;
+                        var currApiCorrId_Prod = string.Empty;
+                        var currApiCorrId_Uat = string.Empty;
                         List<AvailableCarriersResponse> avCarrsProd = null;
                         List<AvailableCarriersResponse> avCarrsUat = null;
                         AvailableCarriersRequestV2 centiroV2ReqOurs = (AvailableCarriersRequestV2)dle.ParsedInput;
@@ -947,9 +951,9 @@ namespace Albelli.MiscUtils.CLI
                         };
                         if (!string.IsNullOrWhiteSpace(apiEndpointProd) && !string.IsNullOrWhiteSpace(apiAuthTokenProd))
                         {
-                            currApiCorrId = Guid.NewGuid().ToString();
-                            var corrIdExreHdrs = new Dictionary<string, string>() { { "X-CorrelationId", currApiCorrId } };
-                            var centiroResponseProd = ApiUtility.Post(apiEndpointProd, apiAuthTokenProd, centiroV2ReqJson, corrIdExreHdrs);
+                            currApiCorrId_Prod = Guid.NewGuid().ToString();
+                            var corrIdExreHdrs_Prod = new Dictionary<string, string>() { { "X-CorrelationId", currApiCorrId_Prod } };
+                            var centiroResponseProd = ApiUtility.Post(apiEndpointProd, apiAuthTokenProd, centiroV2ReqJson, corrIdExreHdrs_Prod);
                             if (centiroResponseProd.Item1 == HttpStatusCode.OK)
                             {
                                 avCarrsProd = JsonConvert.DeserializeObject<List<AvailableCarriersResponse>>(centiroResponseProd.Item2);
@@ -957,7 +961,9 @@ namespace Albelli.MiscUtils.CLI
                         }
                         if (!string.IsNullOrWhiteSpace(apiEndpointUat) && !string.IsNullOrWhiteSpace(apiAuthTokenUat))
                         {
-                            var centiroResponseUat = ApiUtility.Post(apiEndpointUat, apiAuthTokenUat, centiroV2ReqJson, null);///corrIdExreHdrs
+                            currApiCorrId_Uat = Guid.NewGuid().ToString();
+                            var corrIdExreHdrs_Uat = new Dictionary<string, string>() { { "X-CorrelationId", currApiCorrId_Uat } };
+                            var centiroResponseUat = ApiUtility.Post(apiEndpointUat, apiAuthTokenUat, centiroV2ReqJson, corrIdExreHdrs_Uat);
 
                             if (centiroResponseUat.Item1 == HttpStatusCode.OK)
                             {
@@ -969,9 +975,9 @@ namespace Albelli.MiscUtils.CLI
                         var matrixTopCandidate_Uat = filteredUat?.Candidates?.Where(c => c.Verdict == ACSSFilteringVerdict.Served)?.FirstOrDefault();
                         var matrixCandidates_Uat = filteredUat?.Candidates?.Where(c => c.Verdict == ACSSFilteringVerdict.Served)?.ToList()?.Select(c => c.MatrixRow.PK())?.ToArray();
 
-                        //Console.WriteLine($"{ts:s}\t{CentiroV1}\t{CentiroV2}\t{matrixTopCandidate_Prod?.MatrixRow?.PK()}\t{matrixTopCandidate_Uat?.MatrixRow?.PK()}\t{currApiCorrId}\t{avCarrsProd?.FirstOrDefault()?.PK()}\t{avCarrsUat?.FirstOrDefault()?.PK()}\t{centiroV2ReqJson}");
+                        //Console.WriteLine($"{ts:s}\t{CentiroV1}\t{CentiroV2}\t{matrixTopCandidate_Prod?.MatrixRow?.PK()}\t{matrixTopCandidate_Uat?.MatrixRow?.PK()}\t{currApiCorrId_Prod}\t{avCarrsProd?.FirstOrDefault()?.PK()}\t{avCarrsUat?.FirstOrDefault()?.PK()}\t{centiroV2ReqJson}");
                         var trueCentiroV2ReqJson = JsonConvert.SerializeObject(trueCentiroV2Req, Formatting.None);
-                        Console.WriteLine($"{ts:s}\t{CentiroV1}\t{CentiroV2}\t{CentiroV2.Split(',').Length}\t{IEnumerableToString(matrixCandidates_Prod)}\t{matrixCandidates_Prod?.Count()}\t{IEnumerableToString(matrixCandidates_Uat)}\t{matrixCandidates_Uat?.Count()}\t{matrixCandidates_Prod?.FirstOrDefault()}\t{matrixCandidates_Uat?.FirstOrDefault()}\t{currApiCorrId}\t{avCarrsProd?.FirstOrDefault()?.PK()}\t{avCarrsUat?.FirstOrDefault()?.PK()}\t{centiroV2ReqJson}\t{trueCentiroV2ReqJson}");
+                        Console.WriteLine($"{ts:s}\t{CentiroV1}\t{CentiroV2}\t{CentiroV2.Split(',').Length}\t{IEnumerableToString(matrixCandidates_Prod)}\t{matrixCandidates_Prod?.Count()}\t{IEnumerableToString(matrixCandidates_Uat)}\t{matrixCandidates_Uat?.Count()}\t{matrixCandidates_Prod?.FirstOrDefault()}\t{matrixCandidates_Uat?.FirstOrDefault()}\t{currApiCorrId_Prod}\t{currApiCorrId_Uat}\t{avCarrsProd?.FirstOrDefault()?.PK()}\t{avCarrsUat?.FirstOrDefault()?.PK()}\t{centiroV2ReqJson}\t{trueCentiroV2ReqJson}");
                     }
                     catch (Exception ex)
                     {
@@ -1067,6 +1073,43 @@ namespace Albelli.MiscUtils.CLI
             return 0;
         }
 
+        public static int PCT10679ExportLeadtimes(string[] args)
+        {
+            string envName = args[0];
+            string authToken = args[1];
+            string saveAsPath = args[2];
+
+
+            string host = string.Empty;
+            switch (envName.Trim().ToLower())
+            {
+                case "prod":
+                case "production": host = "leadtime-api.production-scheduling.infra.photos"; break;
+                case "test":
+                case "sandbox": host = "leadtime-api.tst.production-scheduling.infra.photos"; break;
+                case "acc":
+                case "acceptance":
+                case "non-prod": host = "leadtime-api.acc.production-scheduling.infra.photos"; break;
+                default: throw new ArgumentException(nameof(envName));
+            }
+            string url = $"https://{host}/v2/leadtime";
+            var apiRes = ApiUtility.Get(url, authToken);
+            if (apiRes.Item1 != HttpStatusCode.OK)
+            {
+                Console.WriteLine($"{nameof(apiRes)}:{{ {apiRes.Item1}, {apiRes.Item2} }}");
+                return 1;
+            }
+            var leadTimes = JsonConvert.DeserializeObject<GetAllLeadTimesResponse>(apiRes.Item2);
+
+            StringBuilder sbTarget = new StringBuilder();
+            //Tools.DataTableToCsv(leadTimes?.ToDataTable(), sbTarget);
+            Tools.ListToCsv<FlattenedLeadTime>(leadTimes?.Flatten(), sbTarget);
+            if (!string.IsNullOrWhiteSpace(saveAsPath))
+                System.IO.File.WriteAllText(saveAsPath, sbTarget.ToString());
+            else
+                Console.WriteLine(sbTarget.ToString());
+            return 0;
+        }
         #endregion
 
         #endregion

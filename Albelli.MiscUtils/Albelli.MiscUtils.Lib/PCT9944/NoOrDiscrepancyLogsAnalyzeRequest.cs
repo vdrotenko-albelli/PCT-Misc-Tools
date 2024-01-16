@@ -14,6 +14,7 @@ namespace Albelli.MiscUtils.Lib.PCT9944
         public bool PrintPayloadJson { get; set; }
         public string[] FilterByPlants { get; set; }
         public Dictionary<string, MatrixZonesPerEnvConfig> MatrixZonesByPlantPerEnv { get; set; }
+        public List<string> AllPlantCodes { get; set; }
     }
     public class MatrixZonesPerEnvConfig
     {

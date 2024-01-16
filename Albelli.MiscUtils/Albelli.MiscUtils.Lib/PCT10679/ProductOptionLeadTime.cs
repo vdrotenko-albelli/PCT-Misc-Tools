@@ -1,0 +1,15 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Albelli.MiscUtils.Lib.PCT10679
+{
+    public class ProductOptionLeadTime
+    {
+        public string ProductOptionName { get; set; }
+        public string ProductOptionValue { get; set; }
+        public LeadTime LeadTime { get; set; }
+    }
+}

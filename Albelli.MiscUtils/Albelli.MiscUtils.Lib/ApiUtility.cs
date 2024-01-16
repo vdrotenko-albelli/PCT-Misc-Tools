@@ -52,5 +52,45 @@ namespace Albelli.MiscUtils.Lib
                 }
             }
         }
+        public static Tuple<HttpStatusCode, string> Get(string url, string authToken, Dictionary<string, string> customHeaders = null)
+        {
+            const string RequestIdHdr = "Request-Id";
+
+            using (HttpClient wc = new HttpClient())
+            {
+                wc.DefaultRequestHeaders.Add("authorization", $"Bearer {authToken}");
+                if (true != customHeaders?.Any())
+                    wc.DefaultRequestHeaders.Add("Correlation-Context", "X-Is-Load-Test-Request=True");
+                else
+                {
+                    foreach (string key in customHeaders.Keys)
+                    {
+                        wc.DefaultRequestHeaders.Add(key, customHeaders[key]);
+                    }
+                }
+                using (var reqMsg = new HttpRequestMessage(HttpMethod.Get, url))
+                {
+                    reqMsg.Headers.Add(RequestIdHdr, Guid.NewGuid().ToString());
+                    reqMsg.Headers.Add("Accept", "application/json");
+                    var resp = wc.SendAsync(reqMsg).ConfigureAwait(false).GetAwaiter().GetResult();
+                    string respContent = null;
+                    if (resp.StatusCode == HttpStatusCode.OK)
+                    {
+                        respContent = resp.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+                    }
+                    else
+                    {
+
+                        try
+                        {
+                            respContent = resp.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+                        }
+                        catch { }
+                        respContent = $"{url}:{(int)resp.StatusCode} {resp.StatusCode}/{respContent}/{resp.ReasonPhrase}";
+                    }
+                    return new Tuple<HttpStatusCode, string>(resp.StatusCode, respContent);
+                }
+            }
+        }
     }
 }

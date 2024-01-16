@@ -36,7 +36,7 @@ namespace Albelli.MiscUtils.Lib.PCT9944
         public string PackageLabel { get; set; }
         public string IsLetterbox { get; set; }
         public string Currency { get; set; }
-        public double ImportTaxRatio { get; set; }
+        public double? ImportTaxRatio { get; set; }
 
         public ACSSMatrixEntry() 
         { }
@@ -68,7 +68,9 @@ namespace Albelli.MiscUtils.Lib.PCT9944
             PackageLabel = dr["Package Label"] as string;
             IsLetterbox = dr["IsLetterbox"] as string;
             Currency = dr["Currency"] as string;
-            ImportTaxRatio = double.Parse(dr["Import Tax Ratio"] as string);
+            var impTaxRatStr = dr["Import Tax Ratio"] as string;
+            if (!string.IsNullOrWhiteSpace(impTaxRatStr))
+                ImportTaxRatio = double.Parse(impTaxRatStr);
         }
 
         private bool TryParseVariousBool(string? val, bool defaultTo)
