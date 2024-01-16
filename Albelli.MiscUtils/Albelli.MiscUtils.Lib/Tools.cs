@@ -1,6 +1,8 @@
-﻿using System;
+﻿using CsvHelper.Configuration;
+using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -27,5 +29,29 @@ namespace Albelli.MiscUtils.Lib
             return dt;
         }
 
+        public static void DataTableToCsv(DataTable dt, StringBuilder sbTarget)
+        {
+            var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+            {
+                NewLine = Environment.NewLine
+            };
+            using (TextWriter w = new StringWriter(sbTarget))
+            using (CsvHelper.CsvWriter csvWriter = new CsvHelper.CsvWriter(w, config))
+            {
+                csvWriter.WriteRecords(dt.Rows);
+            }
+        }
+        public static void ListToCsv<T>(List<T> dt, StringBuilder sbTarget)
+        {
+            var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+            {
+                NewLine = Environment.NewLine
+            };
+            using (TextWriter w = new StringWriter(sbTarget))
+            using (CsvHelper.CsvWriter csvWriter = new CsvHelper.CsvWriter(w, config))
+            {
+                csvWriter.WriteRecords<T>(dt);
+            }
+        }
     }
 }

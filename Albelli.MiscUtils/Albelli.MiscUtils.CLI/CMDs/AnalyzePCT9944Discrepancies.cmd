@@ -21,6 +21,9 @@ REM CALL AnalyzePCT9944Discrepancies_worker.cmd "%INPUTS_DIR%\Test_Acc_Discr_e01
 REM SET INPUTS_DIR=F:\home\vmdrot\EPAM\Projs\PTBX-NDC\JIRA\PCT-9944\EsLogs\1218\Discr
 REM CALL AnalyzePCT9944Discrepancies_worker.cmd "%INPUTS_DIR%\Discr_PROD_1216-18.csv"  "" "%INPUTS_DIR%\Discr_PROD_1216-18_anlz.tab"
 
-SET INPUTS_DIR=F:\home\vmdrot\EPAM\Projs\PTBX-NDC\JIRA\PCT-9944\EsLogs\1219\Discr
+REM SET INPUTS_DIR=F:\home\vmdrot\EPAM\Projs\PTBX-NDC\JIRA\PCT-9944\EsLogs\1219\Discr
 REM CALL AnalyzePCT9944Discrepancies_worker.cmd "%INPUTS_DIR%\Discr_TEST_ACC_1219.csv"  "" "%INPUTS_DIR%\Discr_TEST_ACC_1219_anlz.tab"
-CALL AnalyzePCT9944Discrepancies_worker.cmd "%INPUTS_DIR%\Discr_PROD_1219.csv"  "" "%INPUTS_DIR%\Discr_PROD_1219_anlz.tab"
+REM CALL AnalyzePCT9944Discrepancies_worker.cmd "%INPUTS_DIR%\Discr_PROD_1219.csv"  "" "%INPUTS_DIR%\Discr_PROD_1219_anlz.tab"
+
+SET INPUTS_DIR=F:\home\vmdrot\EPAM\Projs\PTBX-NDC\JIRA\PCT-9944\EsLogs\0115\Discr
+CALL AnalyzePCT9944Discrepancies_worker.cmd "%INPUTS_DIR%\Discr_PROD_0115.csv"  "" "%INPUTS_DIR%\Discr_PROD_0115_anlz.tab"
