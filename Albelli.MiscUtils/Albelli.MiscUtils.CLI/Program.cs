@@ -4,6 +4,7 @@ using Albelli.MiscUtils.Lib.ESLogs;
 using Albelli.MiscUtils.Lib.Excel;
 using Albelli.MiscUtils.Lib.PCT10679;
 using Albelli.MiscUtils.Lib.PCT9944;
+using Albelli.MiscUtils.Lib.PCT9944.v1;
 using Centiro.PromiseEngine.Client;
 using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json;
@@ -644,7 +645,7 @@ namespace Albelli.MiscUtils.CLI
             Dictionary<string, PCT9944FullDiffInfo> missing = new();
             Dictionary<string, PCT9944FullDiffInfo> excessive = new();
             List<DiscrepancyLogEntry> des = PCT9944DiscrepanciesLogReader.Read(inputCsv);
-            foreach(DiscrepancyLogEntry dle in des)
+            foreach (DiscrepancyLogEntry dle in des)
             {
                 AccountForPCT9944(diffs, dle.DiffStr, dle.XCorrelationId, dle.Input);
                 AccountForPCT9944(missing, dle.Missing, dle.XCorrelationId, dle.Input);
@@ -673,9 +674,9 @@ namespace Albelli.MiscUtils.CLI
             {
                 try
                 {
-                    
+
                     string inputCsv = currLog;
-                    
+
                     if (!string.IsNullOrWhiteSpace(inputParams.LogsDir) && Directory.Exists(inputParams.LogsDir))
                         inputCsv = Path.Combine(inputParams.LogsDir, inputCsv);
                     var currNDLEs = PCT9944DiscrepanciesLogReader.ReadNoDiscrepancies(inputCsv);
@@ -906,7 +907,7 @@ namespace Albelli.MiscUtils.CLI
             {
                 matrixZonesByPlant_Prod.Add(plantKey, new Tuple<DataTable, DataTable>(ExcelReader.Read(prodMatrixZones.MatrixZonesPerPlant[plantKey].MatrixXlsPath), ExcelReader.Read(prodMatrixZones.MatrixZonesPerPlant[plantKey].ZonesXlsPath)));
             }
-            if (uatMatrixZones.MatrixZonesPerPlant != null && true == uatMatrixZones.MatrixZonesPerPlant.Any()) 
+            if (uatMatrixZones.MatrixZonesPerPlant != null && true == uatMatrixZones.MatrixZonesPerPlant.Any())
             {
                 foreach (string plantKey in uatMatrixZones.MatrixZonesPerPlant?.Keys)
                 {
@@ -930,7 +931,7 @@ namespace Albelli.MiscUtils.CLI
                         DiscrepancyLogEntry dle = JsonConvert.DeserializeObject<DiscrepancyLogEntry>(JSON);
                         ACSSCandidatesFilterer filtererProd = new ACSSCandidatesFilterer(matrixZonesByPlant_Prod[PlantCode].Item1, matrixZonesByPlant_Prod[PlantCode].Item2) { Debug = debugFilterers };
                         var filteredProd = filtererProd.Filter(dle?.ParsedInput);
-                        
+
                         ACSSCandidatesFilteringResponse filteredUat = null;
                         if (true == matrixZonesByPlant_Uat?.Any() && matrixZonesByPlant_Uat.ContainsKey(PlantCode))
                         {
@@ -944,7 +945,7 @@ namespace Albelli.MiscUtils.CLI
                         AvailableCarriersRequestV2 centiroV2ReqOurs = (AvailableCarriersRequestV2)dle.ParsedInput;
                         string centiroV2ReqJson = JsonConvert.SerializeObject(centiroV2ReqOurs, Formatting.None);
                         DateTime ts = DateTime.Now;
-                        GetOptionsRequest trueCentiroV2Req =  new GetOptionsRequest
+                        GetOptionsRequest trueCentiroV2Req = new GetOptionsRequest
                         {
                             MessageId = Guid.NewGuid(),
                             Deliveries = new List<DeliveryRequest> { dle.ParsedInput.ToDeliveryRequest().ToCentiroModel() }
@@ -1108,6 +1109,200 @@ namespace Albelli.MiscUtils.CLI
                 System.IO.File.WriteAllText(saveAsPath, sbTarget.ToString());
             else
                 Console.WriteLine(sbTarget.ToString());
+            return 0;
+        }
+
+        public static int ParseESLogJSContentTest(string[] args)
+        {
+            string srcCsv = args[0];
+            var entries = ESLogsJSContentParser.ReadOut(srcCsv);
+            Console.WriteLine(JsonConvert.SerializeObject(entries, Formatting.Indented));
+            return 0;
+        }
+
+        public static int ReplayJSContent(string[] args)
+        {
+            string srcLogCsv = args[0];
+            string apiUrl = args[1];
+            string authToken = args[2];
+            string logErrorsOnlyStr = args.Length > 3 ? args[3] : string.Empty;
+            bool logErrorsOnly;
+            if (!bool.TryParse(logErrorsOnlyStr, out logErrorsOnly))
+                logErrorsOnly = true;
+
+            string errorDelim = new string('-', 33);
+            int completedCount = 0;
+            int errCount = 0;
+            var entries = ESLogsJSContentParser.ReadOut(srcLogCsv);
+            foreach (var entry in entries)
+            {
+                if (entry.Message.IndexOf("POST ") != 0)
+                    continue;
+                try
+                {
+                    var apiResp = ApiUtility.Post(apiUrl, authToken, entry.JSContent, null);
+                    if (apiResp.Item1 != HttpStatusCode.OK)
+                        Console.Error.WriteLine($"Error:{apiResp.Item1}|{apiResp.Item2}:\n{entry.JSContent}\n{errorDelim}");
+                    else
+                    {
+                        if (!logErrorsOnly)
+                            Console.Error.WriteLine($"Success:{apiResp.Item1}|{apiResp.Item2}:\n{entry.JSContent}\n{errorDelim}");
+                    }
+                    completedCount++;
+                }
+                catch (Exception ex)
+                {
+                    errCount++;
+                    Console.Error.WriteLine($"Exception:{entry.XCorrelationId}:{ex}\n===\n{entry.JSContent}\n{errorDelim}");
+                }
+            }
+            Console.WriteLine($"{nameof(completedCount)}:{completedCount}\n{nameof(errCount)}:{errCount}");
+            return 0;
+        }
+
+        public static int PCT9247ReplayCompareV1vsV2(string[] args)
+        {
+            string srcLogCsv1 = args[0];
+            string srcLogCsv2 = args[1];
+            string apiUrlV1 = args[2];
+            string authTokenV1 = args[3];
+            string apiUrlV2 = args[4];
+            string authTokenV2 = args[5];
+            string outputPath = args[6];
+
+            string errorDelim = new string('-', 33);
+            int completedCount = 0;
+            int errCount = 0;
+            var entriesV1 = !string.IsNullOrWhiteSpace(srcLogCsv1) && System.IO.File.Exists(srcLogCsv1) ? ESLogsJSContentParser.ReadOut(srcLogCsv1) : new List<ESLogEntryEx>();
+            var entriesV2 = !string.IsNullOrWhiteSpace(srcLogCsv2) && System.IO.File.Exists(srcLogCsv2) ? ESLogsJSContentParser.ReadOut(srcLogCsv2) : new List<ESLogEntryEx>();
+
+            var allEntries = new List<Tuple<CalculateCarrierModel,string,string>>();
+            entriesV1.ForEach(e =>
+            {
+                if (e.Message.IndexOf("POST ") == 0)
+                {
+                    try
+                    {
+                        AvailableCarriersRequest req = JsonConvert.DeserializeObject<AvailableCarriersRequest>(e.JSContent);
+                        allEntries.Add(new Tuple<CalculateCarrierModel, string, string>((CalculateCarrierModel)req, e.JSContent, string.Empty));
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.Error.WriteLine($"Error deserializing or converting an entry(v1):{ex},\n{e.JSContent}");
+                    }
+                }
+            });
+            var defaultv1ArticleTypes = new List<string> { "PhotoBook PhotoCover" };
+            entriesV2.ForEach(e =>
+            {
+                if (e.Message.IndexOf("POST ") == 0)
+                {
+                    try
+                    {
+                        AvailableCarriersRequestV2 req = JsonConvert.DeserializeObject<AvailableCarriersRequestV2>(e.JSContent);
+                        var ccm = (CalculateCarrierModel)req;
+                        if (true != ccm.ArticleTypes?.Any())
+                            ccm.ArticleTypes = defaultv1ArticleTypes;
+                        allEntries.Add(new Tuple<CalculateCarrierModel, string, string>(ccm, string.Empty, e.JSContent));
+                    }
+                    catch(Exception ex)
+                    {
+                            Console.Error.WriteLine($"Error deserializing or converting an entry(v2):{ex},\n{e.JSContent}");
+                    }
+                }
+            });
+
+            ProgressTracker progressTracker = new ProgressTracker();
+            progressTracker.Start(allEntries.Count, System.Console.Out, DateTime.Now);
+            List< PCT9247ReplayCompareV1vsV2Entry> rslt = new();
+            foreach (var entry in allEntries)
+            {
+                var dr = new PCT9247ReplayCompareV1vsV2Entry();
+                var XCorrelationId = Guid.NewGuid().ToString();
+                dr.CalculateCarrierModel = JsonConvert.SerializeObject(entry.Item1, Formatting.Indented);
+                dr.XCorrelationId = XCorrelationId;
+                dr.CalculateCarrierModelShort = entry.Item1.ToString();
+                try
+                {
+                    var v1ReqJson = !string.IsNullOrWhiteSpace(entry.Item2) ? entry.Item2 : JsonConvert.SerializeObject((AvailableCarriersRequest)entry.Item1);
+                    dr.v1ReqJson = v1ReqJson;
+                    var v2ReqJson = !string.IsNullOrWhiteSpace(entry.Item3) ? entry.Item3 : JsonConvert.SerializeObject((AvailableCarriersRequestV2)entry.Item1);
+                    dr.v2ReqJson = v2ReqJson;
+                    IEnumerable<AvailableCarriersResponse> availablesV1 = null;
+                    IEnumerable<AvailableCarriersResponse> availablesV2 = null;
+                    var corrIdHdrs = new Dictionary<string, string>() { { "X-CorrelationId", XCorrelationId } };
+                    try
+                    {
+                        var v1Resp = ApiUtility.Post(apiUrlV1, authTokenV1, v1ReqJson, corrIdHdrs);
+                        dr.v1Status = v1Resp.Item1.ToString();
+                        dr.v1Resp = v1Resp.Item2;
+                        if (v1Resp.Item1 == HttpStatusCode.OK)
+                        {
+                            availablesV1 = JsonConvert.DeserializeObject<IEnumerable<AvailableCarriersResponse>>(v1Resp.Item2);
+                        }
+                        dr.v1Count = availablesV1?.Count();
+                    }
+                    catch (Exception e)
+                    {
+                        dr.v1Err = e.ToString();
+                    }
+
+                    try
+                    {
+                        var v2Resp = ApiUtility.Post(apiUrlV2, authTokenV2, v2ReqJson, corrIdHdrs);
+                        dr.v2Status = v2Resp.Item1.ToString();
+                        dr.v2Resp = v2Resp.Item2;
+                        if (v2Resp.Item1 == HttpStatusCode.OK)
+                        {
+                            availablesV2 = JsonConvert.DeserializeObject<IEnumerable<AvailableCarriersResponse>>(v2Resp.Item2);
+                        }
+                        dr.v2Count = availablesV2?.Count();
+                    }
+                    catch (Exception e)
+                    {
+                        dr.v2Err = e.ToString();
+                    }
+                    string v1PKs = string.Join(",", availablesV1?.Select(a => a.PK()).ToArray());
+                    string v2PKs = string.Join(",", availablesV2?.Select(a => a.PK()).ToArray());
+                    dr.v1PKs = v1PKs;
+                    dr.v2PKs = v2PKs;
+                    string Diff = string.Empty;
+                    if (availablesV1 == null && availablesV2 == null)
+                        Diff = 0.ToString();
+                    else if (availablesV1 == null || availablesV2 == null)
+                        Diff = "null vs non-null";
+                    else if (!availablesV1.Any() && !availablesV2.Any())
+                        Diff = 0.ToString();
+                    else if (availablesV1?.Count() != availablesV2?.Count())
+                        Diff = $"Diff counts({availablesV1?.Count()} vs {availablesV2?.Count()})";
+                    else if (v1PKs != v2PKs)
+                    {
+                        if (availablesV1.Select(a => a.PK()).ToList().Intersect(availablesV2.Select(a => a.PK()).ToList()).Count() == availablesV1.Count())
+                            Diff = "Order";
+                        else
+                            Diff = "Different";
+                    }
+                    else if (availablesV1?.Count() == availablesV2?.Count() && dr.v1PKs == dr.v2PKs)
+                        Diff = 0.ToString();
+                    dr.Diff = Diff;
+                    completedCount++;
+                }
+                catch (Exception ex)
+                {
+                    errCount++;
+                    dr.Error = ex.ToString();
+                }
+                finally
+                {
+                    progressTracker.ItemComplete();
+                }
+                rslt.Add(dr);
+            }
+            Tools.ListToCsv(rslt, outputPath);
+
+            var diffs = rslt.Where(e => e.Diff != 0.ToString()).GroupBy(e => $"{e.v1PKs} vs {e.v2PKs}").Select(grp => new { Diff = grp.Key, Count = grp.Count() }).ToList();
+            Console.WriteLine($"{nameof(completedCount)}:{completedCount}\n{nameof(errCount)}:{errCount}");
+            diffs.ForEach(d => Console.WriteLine($"{d.Diff}\t{d.Count}"));
             return 0;
         }
         #endregion
