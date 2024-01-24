@@ -1,8 +1,10 @@
-﻿using System;
+﻿using Albelli.MiscUtils.Lib.PCT9944.v1;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Albelli.MiscUtils.Lib.PCT9944.Constants;
 
 namespace Albelli.MiscUtils.Lib.PCT9944
 {
@@ -84,6 +86,55 @@ namespace Albelli.MiscUtils.Lib.PCT9944
             rslt.PlantCode = model.PlantCode;
             return rslt;
         }
+
+        public static explicit operator AvailableCarriersRequest(CalculateCarrierModel model)
+        {
+            return new AvailableCarriersRequest
+            {
+                ArticleTypes = model.ArticleTypes,
+                CountryId = model.CountryId,
+                Package = new v1.Package()
+                {
+                    HeightInMm = model.Package.HeightInMm,
+                    LengthInMm = model.Package.LengthInMm,
+                    WeightInGrams = model.Package.WeightInGrams,
+                    Type = model.Package.Type,
+                    WidthInMm = model.Package.WidthInMm,
+                },
+                PlantCode = model.PlantCode,
+                Brand = model.Brand,
+                ZipCode = model.ZipCode,
+                EstimatedDeliveryDate = model.EstimatedDeliveryDate,
+                EstimatedShippingDate = model.EstimatedShippingDate,
+            };
+        }
+
+        public static explicit operator CalculateCarrierModel(AvailableCarriersRequest request)
+        {
+            return new CalculateCarrierModel
+            {
+                ArticleTypes = request.ArticleTypes,
+                CountryId = request.CountryId,
+                Package = new Package()
+                {
+                    HeightInMm = request.Package.HeightInMm,
+                    LengthInMm = request.Package.LengthInMm,
+                    WeightInGrams= request.Package.WeightInGrams,
+                    Type= request.Package.Type,
+                    WidthInMm = request.Package.WidthInMm,
+                },
+                PlantCode = request.PlantCode,
+                DealerId = Albelli.MiscUtils.Lib.PCT9944.Brand.GetDealerIdByBrand(request.Brand),
+                Brand = request.Brand,
+                ZipCode = request.ZipCode,
+                InEu = CountryStorage.CountryIsInEu(request.CountryId),
+                EstimatedDeliveryDate = request.EstimatedDeliveryDate,
+                EstimatedShippingDate = request.EstimatedShippingDate,
+                // If Customer Prefers PUDO Delivery We Should Not Filter Out PUDO Carriers
+                FilterOutPudoForLetterBox = !DeliveryMethod.PudoDeliveryMethod.Equals(request.PreferredDeliveryMethod, StringComparison.OrdinalIgnoreCase)
+            };
+        }
+
         private string IEnumerableToString(IEnumerable<string> values)
         {
             return true != values?.Any() ? "empty" : string.Join(",", values);

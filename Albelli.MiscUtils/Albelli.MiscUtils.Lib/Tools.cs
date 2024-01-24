@@ -41,6 +41,14 @@ namespace Albelli.MiscUtils.Lib
                 csvWriter.WriteRecords(dt.Rows);
             }
         }
+
+        public static void DataTableToCsv(DataTable dt, string outputPath)
+        {
+            var sb = new StringBuilder();
+            DataTableToCsv(dt, sb);
+            File.WriteAllText(outputPath, sb.ToString());
+        }
+
         public static void ListToCsv<T>(List<T> dt, StringBuilder sbTarget)
         {
             var config = new CsvConfiguration(CultureInfo.InvariantCulture)
@@ -52,6 +60,12 @@ namespace Albelli.MiscUtils.Lib
             {
                 csvWriter.WriteRecords<T>(dt);
             }
+        }
+        public static void ListToCsv<T>(List<T> dt, string outputPath)
+        {
+            var sb = new StringBuilder();
+            ListToCsv<T>(dt, sb);
+            File.WriteAllText(outputPath, sb.ToString());
         }
     }
 }
