@@ -1,0 +1,9 @@
+@echo off
+SET FOLDER_PATH=%~1
+SET CSV_MASK=%~2
+SET API_URL_V2=%~3
+SET API_TOKEN_V2=%~4
+
+REM Var(s)
+SET LOG_PATH=%FOLDER_PATH%\PCT9247Replay500s2.log
+..\bin\Debug\net6.0\Albelli.MiscUtils.CLI.exe PCT9247Replay500s2 "%FOLDER_PATH%" "%CSV_MASK%" "%API_URL_V2%" "%API_TOKEN_V2%" %5 %6 %7 %8 %9 1> "%LOG_PATH%" 2>&1
