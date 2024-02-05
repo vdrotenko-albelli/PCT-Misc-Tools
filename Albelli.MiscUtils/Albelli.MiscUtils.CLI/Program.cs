@@ -10,15 +10,19 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json;
 using ProductionOrderOperationsApi;
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Data.Odbc;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Reflection;
 using System.Security;
 using System.Text;
+using static Albelli.MiscUtils.Lib.PCT9944.Constants;
 using static System.Net.WebRequestMethods;
 
 namespace Albelli.MiscUtils.CLI
@@ -855,13 +859,13 @@ namespace Albelli.MiscUtils.CLI
                         AvailableCarriersRequestV2 centiroV2Req = (AvailableCarriersRequestV2)dle.ParsedInput;
                         string centiroV2ReqJson = JsonConvert.SerializeObject(centiroV2Req, Formatting.None);
                         DateTime ts = DateTime.Now;
-                        var centiroResponseProd = ApiUtility.Post(apiEndpointProd, apiAuthTokenProd, centiroV2ReqJson, corrIdExreHdrs);///corrIdExreHdrs_Prod
+                        var centiroResponseProd = ApiUtility.Post(apiEndpointProd, apiAuthTokenProd, centiroV2ReqJson, corrIdExreHdrs).ConfigureAwait(false).GetAwaiter().GetResult();///corrIdExreHdrs_Prod
                         List<AvailableCarriersResponse> avCarrsProd = null;
                         if (centiroResponseProd.Item1 == HttpStatusCode.OK)
                         {
                             avCarrsProd = JsonConvert.DeserializeObject<List<AvailableCarriersResponse>>(centiroResponseProd.Item2);
                         }
-                        var centiroResponseUat = ApiUtility.Post(apiEndpointUat, apiAuthTokenUat, centiroV2ReqJson, null);///corrIdExreHdrs_Prod
+                        var centiroResponseUat = ApiUtility.Post(apiEndpointUat, apiAuthTokenUat, centiroV2ReqJson, null).ConfigureAwait(false).GetAwaiter().GetResult();///corrIdExreHdrs_Prod
                         List<AvailableCarriersResponse> avCarrsUat = null;
                         if (centiroResponseUat.Item1 == HttpStatusCode.OK)
                         {
@@ -954,7 +958,7 @@ namespace Albelli.MiscUtils.CLI
                         {
                             currApiCorrId_Prod = Guid.NewGuid().ToString();
                             var corrIdExreHdrs_Prod = new Dictionary<string, string>() { { "X-CorrelationId", currApiCorrId_Prod } };
-                            var centiroResponseProd = ApiUtility.Post(apiEndpointProd, apiAuthTokenProd, centiroV2ReqJson, corrIdExreHdrs_Prod);
+                            var centiroResponseProd = ApiUtility.Post(apiEndpointProd, apiAuthTokenProd, centiroV2ReqJson, corrIdExreHdrs_Prod).ConfigureAwait(false).GetAwaiter().GetResult();
                             if (centiroResponseProd.Item1 == HttpStatusCode.OK)
                             {
                                 avCarrsProd = JsonConvert.DeserializeObject<List<AvailableCarriersResponse>>(centiroResponseProd.Item2);
@@ -964,7 +968,7 @@ namespace Albelli.MiscUtils.CLI
                         {
                             currApiCorrId_Uat = Guid.NewGuid().ToString();
                             var corrIdExreHdrs_Uat = new Dictionary<string, string>() { { "X-CorrelationId", currApiCorrId_Uat } };
-                            var centiroResponseUat = ApiUtility.Post(apiEndpointUat, apiAuthTokenUat, centiroV2ReqJson, corrIdExreHdrs_Uat);
+                            var centiroResponseUat = ApiUtility.Post(apiEndpointUat, apiAuthTokenUat, centiroV2ReqJson, corrIdExreHdrs_Uat).ConfigureAwait(false).GetAwaiter().GetResult();
 
                             if (centiroResponseUat.Item1 == HttpStatusCode.OK)
                             {
@@ -1140,7 +1144,7 @@ namespace Albelli.MiscUtils.CLI
                     continue;
                 try
                 {
-                    var apiResp = ApiUtility.Post(apiUrl, authToken, entry.JSContent, null);
+                    var apiResp = ApiUtility.Post(apiUrl, authToken, entry.JSContent, null).ConfigureAwait(false).GetAwaiter().GetResult();
                     if (apiResp.Item1 != HttpStatusCode.OK)
                         Console.Error.WriteLine($"Error:{apiResp.Item1}|{apiResp.Item2}:\n{entry.JSContent}\n{errorDelim}");
                     else
@@ -1176,7 +1180,7 @@ namespace Albelli.MiscUtils.CLI
             var entriesV1 = !string.IsNullOrWhiteSpace(srcLogCsv1) && System.IO.File.Exists(srcLogCsv1) ? ESLogsJSContentParser.ReadOut(srcLogCsv1) : new List<ESLogEntryEx>();
             var entriesV2 = !string.IsNullOrWhiteSpace(srcLogCsv2) && System.IO.File.Exists(srcLogCsv2) ? ESLogsJSContentParser.ReadOut(srcLogCsv2) : new List<ESLogEntryEx>();
 
-            var allEntries = new List<Tuple<CalculateCarrierModel,string,string>>();
+            var allEntries = new List<Tuple<CalculateCarrierModel, string, string>>();
             entriesV1.ForEach(e =>
             {
                 if (e.Message.IndexOf("POST ") == 0)
@@ -1205,16 +1209,16 @@ namespace Albelli.MiscUtils.CLI
                             ccm.ArticleTypes = defaultv1ArticleTypes;
                         allEntries.Add(new Tuple<CalculateCarrierModel, string, string>(ccm, string.Empty, e.JSContent));
                     }
-                    catch(Exception ex)
+                    catch (Exception ex)
                     {
-                            Console.Error.WriteLine($"Error deserializing or converting an entry(v2):{ex},\n{e.JSContent}");
+                        Console.Error.WriteLine($"Error deserializing or converting an entry(v2):{ex},\n{e.JSContent}");
                     }
                 }
             });
 
             ProgressTracker progressTracker = new ProgressTracker();
             progressTracker.Start(allEntries.Count, System.Console.Out, DateTime.Now);
-            List< PCT9247ReplayCompareV1vsV2Entry> rslt = new();
+            List<PCT9247ReplayCompareV1vsV2Entry> rslt = new();
             foreach (var entry in allEntries)
             {
                 var dr = new PCT9247ReplayCompareV1vsV2Entry();
@@ -1233,7 +1237,7 @@ namespace Albelli.MiscUtils.CLI
                     var corrIdHdrs = new Dictionary<string, string>() { { "X-CorrelationId", XCorrelationId } };
                     try
                     {
-                        var v1Resp = ApiUtility.Post(apiUrlV1, authTokenV1, v1ReqJson, corrIdHdrs);
+                        var v1Resp = ApiUtility.Post(apiUrlV1, authTokenV1, v1ReqJson, corrIdHdrs).ConfigureAwait(false).GetAwaiter().GetResult();
                         dr.v1Status = v1Resp.Item1.ToString();
                         dr.v1Resp = v1Resp.Item2;
                         if (v1Resp.Item1 == HttpStatusCode.OK)
@@ -1249,7 +1253,7 @@ namespace Albelli.MiscUtils.CLI
 
                     try
                     {
-                        var v2Resp = ApiUtility.Post(apiUrlV2, authTokenV2, v2ReqJson, corrIdHdrs);
+                        var v2Resp = ApiUtility.Post(apiUrlV2, authTokenV2, v2ReqJson, corrIdHdrs).ConfigureAwait(false).GetAwaiter().GetResult();
                         dr.v2Status = v2Resp.Item1.ToString();
                         dr.v2Resp = v2Resp.Item2;
                         if (v2Resp.Item1 == HttpStatusCode.OK)
@@ -1305,7 +1309,212 @@ namespace Albelli.MiscUtils.CLI
             diffs.ForEach(d => Console.WriteLine($"{d.Diff}\t{d.Count}"));
             return 0;
         }
+
+        public static int PCT9247Extract500s(string[] args)
+        {
+            string dir = args[0];
+            string filemask = args[1];
+            var files = Directory.GetFiles(dir, filemask);
+            List<ESLogEntryEx> allEntries = new();
+            foreach (var filPath in files)
+            {
+                allEntries.AddRange(ESLogsJSContentParser.ReadOut(filPath));
+            }
+
+            var grouped = allEntries.GroupBy(e => e.XCorrelationId).Select(grp => new { XCorrId = grp.Key, Count = grp.Count() }).Where(s => s.Count > 1);
+            var oks = allEntries.GroupBy(e => e.XCorrelationId).Select(grp => new { XCorrId = grp.Key, Count = grp.Count() }).Where(s => s.Count == 1);
+            Console.WriteLine($"OKs:{oks.Count()}, 500s: {grouped.Count()}");
+            foreach (var entry in grouped)
+            {
+                Console.WriteLine(entry.XCorrId);
+            }
+            return 0;
+        }
+        public static int PCT9247Replay500s(string[] args)
+        {
+            string dir = args[0];
+            string filemask = args[1];
+            string apiUrl = args[2];
+            string authToken = args[3];
+            string http500OnlyStr = args.Length > 4 ? args[4] : string.Empty;
+
+            bool http500Only;
+            if (!bool.TryParse(http500OnlyStr, out http500Only))
+                http500Only = false;
+
+            var files = Directory.GetFiles(dir, filemask);
+            List<ESLogEntryEx> allEntries = new();
+            foreach (var filPath in files)
+            {
+                allEntries.AddRange(ESLogsJSContentParser.ReadOut(filPath));
+            }
+            Dictionary<string, int> plantStats = new();
+
+            var grouped = allEntries.GroupBy(e => e.XCorrelationId).Select(grp => new { XCorrId = grp.Key, Count = grp.Count() }).Where(s => !http500Only || (http500Only && s.Count > 1));
+            Console.WriteLine($"{nameof(ESLogEntryEx.XCorrelationId)}-ProdOriginal\t{nameof(ESLogEntryEx.XCorrelationId)}-Re-Check\t{nameof(HttpStatusCode)}\tError");
+
+            foreach (var grp in grouped)
+            {
+                string jsContent = allEntries.FirstOrDefault(e => !string.IsNullOrWhiteSpace(e.XCorrelationId) && e.XCorrelationId == grp.XCorrId)?.JSContent;
+                if (string.IsNullOrWhiteSpace(jsContent))
+                    continue;
+                #region collection plant stats
+                try
+                {
+                    var pl = JsonConvert.DeserializeObject<AvailableCarriersRequestV2>(jsContent);
+                    if (pl != null && !string.IsNullOrWhiteSpace(pl?.PlantCode))
+                    {
+                        if (!plantStats.ContainsKey(pl.PlantCode))
+                            plantStats.Add(pl.PlantCode, 0);
+                        plantStats[pl.PlantCode]++;
+                    }
+                }
+                catch
+                {
+                    Console.WriteLine($"Error collecting plant stats for pl:{jsContent}\r\n{new string('-', 33)}");
+                }
+                #endregion
+                var curNewReqXCorr = Guid.NewGuid().ToString();
+                try
+                {
+                    var corrIdHdrs = new Dictionary<string, string>() { { "X-CorrelationId", curNewReqXCorr } };
+                    var v2Resp = ApiUtility.Post(apiUrl, authToken, jsContent, corrIdHdrs).ConfigureAwait(false).GetAwaiter().GetResult();
+                    var err = v2Resp.Item1 == HttpStatusCode.OK ? string.Empty : v2Resp.Item2;
+                    Console.WriteLine($"{grp.XCorrId}\t{curNewReqXCorr}\t{(int)v2Resp.Item1}\t{err}");
+                    if (v2Resp.Item1 == HttpStatusCode.Unauthorized)
+                    {
+                        Console.WriteLine("Token expired, sorry");
+                        break;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"{grp.XCorrId}\t{curNewReqXCorr}\t{0}\t{e.Message}");
+                }
+            }
+            Console.WriteLine(new string('=', 33));
+            Console.WriteLine(JsonConvert.SerializeObject(plantStats, Formatting.Indented));
+            return 0;
+        }
+
+        public static int PCT9247Replay500s2(string[] args)
+        {
+            string dir = args[0];
+            string filemask = args[1];
+            string apiUrl = args[2];
+            string authToken = args[3];
+            string http500OnlyStr = args.Length > 4 ? args[4] : string.Empty;
+            string plThreadsStr = args.Length > 5 ? args[5] : string.Empty;
+
+            bool http500Only;
+            if (!bool.TryParse(http500OnlyStr, out http500Only))
+                http500Only = false;
+
+
+            int plThreads;
+            if (!int.TryParse(plThreadsStr, out plThreads))
+                plThreads = 10;
+
+            var files = Directory.GetFiles(dir, filemask);
+            List<ESLogEntryEx> allEntries = new();
+            foreach (var filPath in files)
+            {
+                allEntries.AddRange(ESLogsJSContentParser.ReadOut(filPath));
+            }
+            Dictionary<string, int> plantStats = new();
+
+            var grouped = allEntries.GroupBy(e => e.XCorrelationId).Select(grp => new { XCorrId = grp.Key, Count = grp.Count() }).Where(s => !http500Only || (http500Only && s.Count > 1));
+            Console.WriteLine($"{nameof(ESLogEntryEx.XCorrelationId)}-ProdOriginal\t{nameof(ESLogEntryEx.XCorrelationId)}-Re-Check\t{nameof(HttpStatusCode)}\tError");
+            ConcurrentQueue<Tuple<string, string>> theQueue = new();
+
+            foreach (var grp in grouped)
+            {
+                string jsContent = allEntries.FirstOrDefault(e => !string.IsNullOrWhiteSpace(e.XCorrelationId) && e.XCorrelationId == grp.XCorrId)?.JSContent;
+                if (string.IsNullOrWhiteSpace(jsContent))
+                    continue;
+                theQueue.Enqueue(new Tuple<string, string>(grp.XCorrId, jsContent));
+                #region collection plant stats
+                try
+                {
+                    var pl = JsonConvert.DeserializeObject<AvailableCarriersRequestV2>(jsContent);
+                    if (pl != null && !string.IsNullOrWhiteSpace(pl?.PlantCode))
+                    {
+                        if (!plantStats.ContainsKey(pl.PlantCode))
+                            plantStats.Add(pl.PlantCode, 0);
+                        plantStats[pl.PlantCode]++;
+                    }
+                }
+                catch
+                {
+                    Console.WriteLine($"Error collecting plant stats for pl:{jsContent}\r\n{new string('-', 33)}");
+                }
+                #endregion
+            }
+            List<Task> tasks = new();
+            for (int i = 0; i < plThreads; i++)
+            {
+                tasks.Add(Task.Run( () => PCT9247Replay500s2ThreadWorker(theQueue,apiUrl, authToken).ConfigureAwait(false).GetAwaiter().GetResult()));
+            }
+            Task.WhenAll(tasks).ConfigureAwait(false).GetAwaiter().GetResult();
+            Console.WriteLine(new string('=', 33));
+            Console.WriteLine(JsonConvert.SerializeObject(plantStats, Formatting.Indented));
+            return 0;
+        }
+
+        private static async Task PCT9247Replay500s2ThreadWorker(ConcurrentQueue<Tuple<string, string>> queue, string apiUrl, string authToken)
+        {
+            do
+            {
+                Tuple<string, string> curr;
+                if (!queue.TryDequeue(out curr))
+                    break;
+                var curNewReqXCorr = Guid.NewGuid().ToString();
+                try
+                {
+                    var corrIdHdrs = new Dictionary<string, string>() { { "X-CorrelationId", curNewReqXCorr } };
+                    var v2Resp = await ApiUtility.Post(apiUrl, authToken, curr.Item2, corrIdHdrs);
+                    var err = v2Resp.Item1 == HttpStatusCode.OK ? string.Empty : v2Resp.Item2;
+                    Console.WriteLine($"{curr.Item1}\t{curNewReqXCorr}\t{(int)v2Resp.Item1}\t{err}");
+                    if (v2Resp.Item1 == HttpStatusCode.Unauthorized)
+                    {
+                        Console.WriteLine("Token expired, sorry");
+                        break;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"{curr.Item1}\t{curNewReqXCorr}\t{0}\t{e.Message}");
+                }
+            } while (true);
+        }
+
         #endregion
+
+
+        public static int PCT9247PrepareYPBVPLeadtimes(string[] args)
+        {
+            string jsonPath = args[0];
+            Console.WriteLine("plantCode\tcarrierName\tdeliveryType\tinEu\tcountryId\tshippingLeadTime\tprovider\tlegacyCarrierName");
+
+            dynamic attrs = JsonConvert.DeserializeObject(System.IO.File.ReadAllText(jsonPath));
+            dynamic carriers = attrs.carriers;
+            for (int i = 0; i < carriers.Count; i++) 
+            {
+                dynamic currCarrier = carriers[i];
+                if (currCarrier.plantCode != "YPB" || currCarrier.locations.Count == 0 || currCarrier.dealerIds[0] != 2000)
+                    continue;
+                for (int j = 0; j < currCarrier.locations.Count; j++)
+                {
+                    dynamic loc = currCarrier.locations[j];
+                    if (loc.providerKey != "qj7du2w9")
+                        continue;
+                    Console.WriteLine($"{currCarrier.plantCode}\t{currCarrier.carrierName}\t{currCarrier.deliveryType}\t{loc.inEu}\t{loc.countryId}\t{loc.shippingLeadTime}\t{loc.provider}\t{loc.legacyCarrierName}");
+                }
+                
+            }
+            
+            return 0;
+        }
 
         #endregion
         #region aux

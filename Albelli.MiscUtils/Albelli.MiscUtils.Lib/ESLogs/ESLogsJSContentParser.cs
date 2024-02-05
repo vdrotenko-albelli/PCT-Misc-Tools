@@ -14,6 +14,7 @@ namespace Albelli.MiscUtils.Lib.ESLogs
         const string MESSAGE_COL_NM_NEW = "_source.Message";
         const string XCORRID_COL_NM_OLD = "X-CorrelationId";
         const string XCORRID_COL_NM_NEW = "_source.X-CorrelationId";
+        private static readonly char[] CRLF = new char[] { '\r', '\n' };
         public static List<ESLogEntryEx> ReadOut(string srcCsv)
         {
             List<ESLogEntryEx> rslt = new();
@@ -25,8 +26,11 @@ namespace Albelli.MiscUtils.Lib.ESLogs
                 ESLogEntryEx curr = new();
                 curr.Message = dr[MsgColNm] as string;
                 curr.JSContent = ParseJSContent(curr.Message);
-                curr.XCorrelationId = dr[XCorrIdColNm] as string;
-                
+                if (dt.Columns.Contains(XCorrIdColNm))
+                    curr.XCorrelationId = dr[XCorrIdColNm] as string;
+                else
+                    curr.XCorrelationId = ParseXCorrId(curr.Message);
+
                 if (dt.Columns.Contains($"@{nameof(curr.timestamp_cw)}"))
                     curr.timestamp_cw = dr[$"@{nameof(curr.timestamp_cw)}"] as string;
                 if (dt.Columns.Contains(nameof(curr.Level)))
@@ -45,5 +49,21 @@ namespace Albelli.MiscUtils.Lib.ESLogs
                 return string.Empty;
             return srcMsg.Substring(pos0 + Token.Length).Trim();
         }
+        public static string ParseXCorrId(string srcMsg)
+        {
+            const string Token = "- X-CorrelationId: ";
+            
+            if (string.IsNullOrWhiteSpace(srcMsg))
+                return string.Empty;
+            int pos0 = srcMsg.IndexOf(Token);
+            if (pos0 == -1)
+                return string.Empty;
+            int pos1 = srcMsg.IndexOfAny(CRLF, pos0 + Token.Length);
+            if (pos1 == -1)
+                return string.Empty;
+
+            return srcMsg.Substring(pos0 + Token.Length, pos1 - (pos0 + Token.Length)).Replace("\n", "").Replace("\r", "").Trim();
+        }
+
     }
 }
