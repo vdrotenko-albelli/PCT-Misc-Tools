@@ -13,5 +13,6 @@ namespace Albelli.MiscUtils.Lib.ESLogs
         public string timestamp_cw { get; set; }
         public string Level { get; set; }
         public string JSContent { get; set; }
+        public string RequestPath { get; set; }
     }
 }

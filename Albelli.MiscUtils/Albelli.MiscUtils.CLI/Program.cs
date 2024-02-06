@@ -2,6 +2,7 @@
 using Albelli.MiscUtils.Lib.AWSCli;
 using Albelli.MiscUtils.Lib.ESLogs;
 using Albelli.MiscUtils.Lib.Excel;
+using Albelli.MiscUtils.Lib.PCT10481;
 using Albelli.MiscUtils.Lib.PCT10679;
 using Albelli.MiscUtils.Lib.PCT9944;
 using Albelli.MiscUtils.Lib.PCT9944.v1;
@@ -1548,6 +1549,79 @@ namespace Albelli.MiscUtils.CLI
             return 0;
         }
 
+
+        public static int PCT10481ReplayCPDs(string[] args) 
+        {
+            string centralLogFpath = args[0];
+            string apiUrlv1 = args[1];
+            string apiTokenv1 = args[2];
+            string apiUrlv2 = args[3];
+            string apiTokenv2 = args[4];
+            string apiUrlv1Prod = args[5];
+            string apiTokenv1Prod = args[6];
+            string apiUrlv2Prod = args[7];
+            string apiTokenv2Prod = args[8];
+
+            string logsDir = Path.GetDirectoryName(centralLogFpath);
+            //string centralLogFpath = Path.Combine(logsDir, centralLog);
+            List<string> xCorrIds = new();
+
+            var centralEntries = ESLogsJSContentParser.ReadOut(centralLogFpath);
+            centralEntries.ForEach(e =>
+            {
+                if (!xCorrIds.Contains(e.XCorrelationId)) xCorrIds.Add(e.XCorrelationId);
+            });
+            var payloadsLogs = Directory.GetFiles(logsDir, "*.csv");
+            var allEntries = new List<ESLogEntryEx>();
+            var estShipDtLc = "EstimatedShippingDate".ToLower();
+            var estShipDtNullLc = "\"EstimatedDeliveryDate\":null".ToLower();
+            foreach (var currLogPath in payloadsLogs)
+            {
+                if (currLogPath.Trim().ToLower() == centralLogFpath.Trim().ToLower())
+                    continue;
+                allEntries.AddRange(ESLogsJSContentParser.ReadOut(currLogPath).Where(e => xCorrIds.Contains(e.XCorrelationId) && (e.JSContent.ToLower().IndexOf(estShipDtLc) == -1 || e.JSContent.ToLower().IndexOf(estShipDtNullLc) != -1)));
+            }
+
+            Console.WriteLine($"{nameof(allEntries)}.Count = {allEntries.Count}");
+
+            List<PCT10481ReplayResultRecord> rslt = new();
+            foreach (var entry in allEntries)
+            {
+                //todo:
+                /*
+                 * 1. reverse only
+                 * 2. plant code, carrierservice name
+                 * 3. Dates: requests' delivery & shipping date, reponse - delivery & shipping date
+                 * 4. Play vs both ACC and PROD and compare results.
+                 * 5. v1 or v2
+                 */
+                var curNewReqXCorr = Guid.NewGuid().ToString();
+                var currCentralEntry = centralEntries.FirstOrDefault(e => e.XCorrelationId.Equals(entry.XCorrelationId));
+                var corrIdHdrs = new Dictionary<string, string>() { { "X-CorrelationId", curNewReqXCorr } };
+                bool isV1 = currCentralEntry.RequestPath.IndexOf("/v1/") == 0;
+                var uatResp = ApiUtility.Post(isV1 ? apiUrlv1 : apiUrlv2, isV1 ? apiTokenv1 : apiTokenv2, entry.JSContent, corrIdHdrs).ConfigureAwait(false).GetAwaiter().GetResult();
+                var prodResp = ApiUtility.Post(isV1 ? apiUrlv1Prod : apiUrlv2Prod, isV1 ? apiTokenv1Prod : apiTokenv2Prod, entry.JSContent, corrIdHdrs).ConfigureAwait(false).GetAwaiter().GetResult();
+                var err = uatResp.Item1 == HttpStatusCode.OK ? string.Empty : uatResp.Item2;
+                //Console.WriteLine($"{currCentralEntry.Message}\t{currCentralEntry.XCorrelationId}\t{curNewReqXCorr}\t{(int)uatResp.Item1}\t{err}");
+                if (uatResp.Item1 == HttpStatusCode.Unauthorized || prodResp.Item1 == HttpStatusCode.Unauthorized)
+                {
+                    Console.Error.WriteLine("Token(s) expired, sorry");
+                    break;
+                }
+                try
+                {
+                    PCT10481ResultsPrinter.FillInResults(rslt, entry, curNewReqXCorr, isV1, currCentralEntry, uatResp, prodResp);
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"{currCentralEntry.Message}\t{currCentralEntry.XCorrelationId}\tError filling in result\t{ex}");
+                }
+            }
+            StringBuilder sb = new StringBuilder();
+            Tools.ListToCsv<PCT10481ReplayResultRecord>(rslt, sb);
+            Console.WriteLine(sb.ToString());
+            return 0;
+        }
         #endregion
         #region aux
         public static int ExitWithComplaints(string msg, int ret)

@@ -14,6 +14,7 @@ namespace Albelli.MiscUtils.Lib.ESLogs
         const string MESSAGE_COL_NM_NEW = "_source.Message";
         const string XCORRID_COL_NM_OLD = "X-CorrelationId";
         const string XCORRID_COL_NM_NEW = "_source.X-CorrelationId";
+        const string REQUEST_PATH_COL_NM = "_source.RequestPath";
         private static readonly char[] CRLF = new char[] { '\r', '\n' };
         public static List<ESLogEntryEx> ReadOut(string srcCsv)
         {
@@ -35,6 +36,8 @@ namespace Albelli.MiscUtils.Lib.ESLogs
                     curr.timestamp_cw = dr[$"@{nameof(curr.timestamp_cw)}"] as string;
                 if (dt.Columns.Contains(nameof(curr.Level)))
                     curr.Level = dr[nameof(curr.Level)] as string;
+                if (dt.Columns.Contains(REQUEST_PATH_COL_NM))
+                    curr.RequestPath = dr[REQUEST_PATH_COL_NM] as string;
                 rslt.Add(curr);
             }
             return rslt;
