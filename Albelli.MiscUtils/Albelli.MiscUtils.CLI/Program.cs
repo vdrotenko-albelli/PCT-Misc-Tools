@@ -15,6 +15,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Data.Odbc;
+using System.Dynamic;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -1453,7 +1454,7 @@ namespace Albelli.MiscUtils.CLI
             List<Task> tasks = new();
             for (int i = 0; i < plThreads; i++)
             {
-                tasks.Add(Task.Run( () => PCT9247Replay500s2ThreadWorker(theQueue,apiUrl, authToken).ConfigureAwait(false).GetAwaiter().GetResult()));
+                tasks.Add(Task.Run(() => PCT9247Replay500s2ThreadWorker(theQueue, apiUrl, authToken).ConfigureAwait(false).GetAwaiter().GetResult()));
             }
             Task.WhenAll(tasks).ConfigureAwait(false).GetAwaiter().GetResult();
             Console.WriteLine(new string('=', 33));
@@ -1498,7 +1499,7 @@ namespace Albelli.MiscUtils.CLI
 
             dynamic attrs = JsonConvert.DeserializeObject(System.IO.File.ReadAllText(jsonPath));
             dynamic carriers = attrs.carriers;
-            for (int i = 0; i < carriers.Count; i++) 
+            for (int i = 0; i < carriers.Count; i++)
             {
                 dynamic currCarrier = carriers[i];
                 if (currCarrier.plantCode != "YPB" || currCarrier.locations.Count == 0 || currCarrier.dealerIds[0] != 2000)
@@ -1510,9 +1511,40 @@ namespace Albelli.MiscUtils.CLI
                         continue;
                     Console.WriteLine($"{currCarrier.plantCode}\t{currCarrier.carrierName}\t{currCarrier.deliveryType}\t{loc.inEu}\t{loc.countryId}\t{loc.shippingLeadTime}\t{loc.provider}\t{loc.legacyCarrierName}");
                 }
-                
+
             }
-            
+
+            return 0;
+        }
+
+        public static int PCT10816GetEmails(string[] args)
+        {
+            string salesOrderIdsListPath = args[0];
+            string cboApiUrl = args[1];
+            string cboApiToken = args[2];
+
+            List<string> salesOrderIds = new List<string>(System.IO.File.ReadAllLines(salesOrderIdsListPath));
+            foreach (var salId in salesOrderIds)
+            {
+                var salIdPure = salId?.Trim();
+                if (string.IsNullOrWhiteSpace(salIdPure))
+                {
+                    Console.WriteLine($"{salIdPure}\t");
+                    continue;
+                }
+                var currUrl = $"{cboApiUrl}{salIdPure}";
+                var apiResp = ApiUtility.Get(currUrl, cboApiToken);
+                if (apiResp?.Item1 != HttpStatusCode.OK)
+                {
+                    Console.WriteLine($"{salIdPure}\t");
+                    Console.Error.WriteLine($"{currUrl}\t{apiResp.Item1}\t{apiResp.Item2}");
+                    continue;
+                }
+                dynamic sal = JsonConvert.DeserializeObject(apiResp.Item2);
+                dynamic cust = sal?.customer;
+                string email = cust?.email;
+                Console.WriteLine($"{salIdPure}\t{email}");
+            }
             return 0;
         }
 
