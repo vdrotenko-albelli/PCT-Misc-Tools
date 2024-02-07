@@ -1550,17 +1550,25 @@ namespace Albelli.MiscUtils.CLI
         }
 
 
-        public static int PCT10481ReplayCPDs(string[] args) 
+        public static int PCT10481ReplayCPDs(string[] args)
         {
-            string centralLogFpath = args[0];
-            string apiUrlv1 = args[1];
-            string apiTokenv1 = args[2];
-            string apiUrlv2 = args[3];
-            string apiTokenv2 = args[4];
-            string apiUrlv1Prod = args[5];
-            string apiTokenv1Prod = args[6];
-            string apiUrlv2Prod = args[7];
-            string apiTokenv2Prod = args[8];
+            //sample: CMDs\PCT10481ReplayCPDs.prms.sample.json
+            dynamic inputArgs = JsonConvert.DeserializeObject(System.IO.File.ReadAllText(args[0]));
+            string justPreviewStr = args.Length > 1 && !string.IsNullOrWhiteSpace(args[1]) ? args[1] : string.Empty;
+            bool justPreview;
+            if (!bool.TryParse(justPreviewStr, out justPreview))
+                justPreview = false;
+            string centralLogFpath = inputArgs.centralLogFpath;
+            string logsFileMask = inputArgs.logsFileMask;
+            string apiUrlv1 = inputArgs.apiUrlv1;
+            string apiTokenv1 = inputArgs.apiToken;
+            string apiUrlv2 = inputArgs.apiUrlv2;
+            string apiTokenv2 = inputArgs.apiToken;
+            string apiUrlv1Prod = inputArgs.apiUrlv1Prod;
+            string apiTokenv1Prod = inputArgs.apiTokenProd;
+            string apiUrlv2Prod = inputArgs.apiUrlv2Prod;
+            string apiTokenv2Prod = inputArgs.apiTokenProd;
+
 
             string logsDir = Path.GetDirectoryName(centralLogFpath);
             //string centralLogFpath = Path.Combine(logsDir, centralLog);
@@ -1571,19 +1579,41 @@ namespace Albelli.MiscUtils.CLI
             {
                 if (!xCorrIds.Contains(e.XCorrelationId)) xCorrIds.Add(e.XCorrelationId);
             });
-            var payloadsLogs = Directory.GetFiles(logsDir, "*.csv");
+            var payloadsLogs = Directory.GetFiles(logsDir, logsFileMask);
             var allEntries = new List<ESLogEntryEx>();
             var estShipDtLc = "EstimatedShippingDate".ToLower();
             var estShipDtNullLc = "\"EstimatedDeliveryDate\":null".ToLower();
+            long totalBruttoCount = 0;
             foreach (var currLogPath in payloadsLogs)
             {
                 if (currLogPath.Trim().ToLower() == centralLogFpath.Trim().ToLower())
                     continue;
-                allEntries.AddRange(ESLogsJSContentParser.ReadOut(currLogPath).Where(e => xCorrIds.Contains(e.XCorrelationId) && (e.JSContent.ToLower().IndexOf(estShipDtLc) == -1 || e.JSContent.ToLower().IndexOf(estShipDtNullLc) != -1)));
+                try
+                {
+                    var tmp = ESLogsJSContentParser.ReadOut(currLogPath);
+                    if (tmp != null)
+                        totalBruttoCount += tmp.Count;
+                    allEntries.AddRange(tmp.Where(e => xCorrIds.Contains(e.XCorrelationId) && (e.JSContent.ToLower().IndexOf(estShipDtLc) == -1 || e.JSContent.ToLower().IndexOf(estShipDtNullLc) != -1)));
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"Error reading out '{currLogPath}':{ex}");
+                }
             }
 
-            Console.WriteLine($"{nameof(allEntries)}.Count = {allEntries.Count}");
-
+            Console.WriteLine($"{nameof(allEntries)}.Count = {allEntries.Count} (of {totalBruttoCount} brutto in total)");
+            var plantCodes = allEntries.Select(e =>
+            {
+                dynamic dto = JsonConvert.DeserializeObject(e.JSContent);
+                string plantCode = dto.PlantCode;
+                if (string.IsNullOrWhiteSpace(plantCode)) plantCode = dto.plantCode;
+                return plantCode;
+            }).GroupBy(e => e).Select(grp => new { PlantCode = grp.Key, Count = grp.Count() }).ToList();
+            Console.WriteLine(JsonConvert.SerializeObject(plantCodes, Formatting.Indented));
+            if (justPreview)
+            {
+                return 0;
+            }
             List<PCT10481ReplayResultRecord> rslt = new();
             foreach (var entry in allEntries)
             {

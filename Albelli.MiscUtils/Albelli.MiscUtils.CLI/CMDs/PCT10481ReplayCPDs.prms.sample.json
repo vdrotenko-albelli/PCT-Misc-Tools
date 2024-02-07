@@ -1,0 +1,10 @@
+{
+	"centralLogFpath": "F:\\home\\vmdrot\\EPAM\\Projs\\PTBX-NDC\\JIRA\\PCT-10481\\eslogs\\On_demand_report_2024-02-06T10_20_51.086Z_670c22e0-c4d9-11ee-a2fe-493223a42deb.csv",
+	"logsFileMask":"On_demand_report_*.csv",
+    "apiUrlv1": "https://carrier.acc.shipping.infra.photos/v1/carriers/available",
+    "apiUrlv2": "https://carrier.acc.shipping.infra.photos/v2/carriers/available",
+    "apiUrlv1Prod": "https://carrier.shipping.infra.photos/v1/carriers/available",
+    "apiUrlv2Prod": "https://carrier.shipping.infra.photos/v2/carriers/available"
+    "apiToken": "",
+    "apiTokenProd": "",
+}
