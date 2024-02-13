@@ -8,11 +8,13 @@ using Albelli.MiscUtils.Lib.PCT9944;
 using Albelli.MiscUtils.Lib.PCT9944.v1;
 using Centiro.PromiseEngine.Client;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.VisualBasic;
 using Newtonsoft.Json;
 using ProductionOrderOperationsApi;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
 using System.Data.Odbc;
@@ -22,6 +24,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Reflection;
+using System.Reflection.Metadata.Ecma335;
 using System.Security;
 using System.Text;
 using static Albelli.MiscUtils.Lib.PCT9944.Constants;
@@ -1568,6 +1571,7 @@ namespace Albelli.MiscUtils.CLI
             string apiTokenv1Prod = inputArgs.apiTokenProd;
             string apiUrlv2Prod = inputArgs.apiUrlv2Prod;
             string apiTokenv2Prod = inputArgs.apiTokenProd;
+            string outputCsvPath = inputArgs.outputCsvPath;
 
 
             string logsDir = Path.GetDirectoryName(centralLogFpath);
@@ -1593,7 +1597,7 @@ namespace Albelli.MiscUtils.CLI
                     var tmp = ESLogsJSContentParser.ReadOut(currLogPath);
                     if (tmp != null)
                         totalBruttoCount += tmp.Count;
-                    allEntries.AddRange(tmp.Where(e => xCorrIds.Contains(e.XCorrelationId) && (e.JSContent.ToLower().IndexOf(estShipDtLc) == -1 || e.JSContent.ToLower().IndexOf(estShipDtNullLc) != -1)));
+                    allEntries.AddRange(tmp.Where(e => xCorrIds.Contains(e.XCorrelationId) && e.Message.IndexOf("POST ") == 0 && (e.JSContent.ToLower().IndexOf(estShipDtLc) == -1 || e.JSContent.ToLower().IndexOf(estShipDtNullLc) != -1)));
                 }
                 catch (Exception ex)
                 {
@@ -1610,6 +1614,8 @@ namespace Albelli.MiscUtils.CLI
                 return plantCode;
             }).GroupBy(e => e).Select(grp => new { PlantCode = grp.Key, Count = grp.Count() }).ToList();
             Console.WriteLine(JsonConvert.SerializeObject(plantCodes, Formatting.Indented));
+            var trtModesCentral = centralEntries.Select(e => new { PlantCode = PCT10481MiscParser.CPDErrMsg_ParsePlant(e.Message), ModeOfTransport = PCT10481MiscParser.CPDErrMsg_ParseModeOfTransport(e.Message) }).GroupBy(e => e.ModeOfTransport).Select(grp => new { ModeOfTransport = grp.Key, Cnt = grp.Count() }).ToList();
+            Console.WriteLine(JsonConvert.SerializeObject(trtModesCentral, Formatting.Indented));
             if (justPreview)
             {
                 return 0;
@@ -1647,9 +1653,80 @@ namespace Albelli.MiscUtils.CLI
                     Console.Error.WriteLine($"{currCentralEntry.Message}\t{currCentralEntry.XCorrelationId}\tError filling in result\t{ex}");
                 }
             }
-            StringBuilder sb = new StringBuilder();
-            Tools.ListToCsv<PCT10481ReplayResultRecord>(rslt, sb);
-            Console.WriteLine(sb.ToString());
+            //???!
+            var trtModesActual = rslt.Select(r => r.carrierServiceKey.Split(':')[1]).GroupBy(e => e).Select(grp => new { ModeOfTransport = grp.Key, Cnt = grp.Count() }).ToList();
+            Console.WriteLine(JsonConvert.SerializeObject(trtModesCentral, Formatting.Indented));
+
+            var nonCoveredTrtModes = trtModesCentral.Select(m => m.ModeOfTransport).Except(trtModesActual.Select(m => m.ModeOfTransport)).ToList();
+            Console.WriteLine($"{nameof(nonCoveredTrtModes)}");
+            Console.WriteLine(JsonConvert.SerializeObject(nonCoveredTrtModes, Formatting.Indented));
+
+            if (!string.IsNullOrWhiteSpace(outputCsvPath))
+            {
+                Tools.ListToCsv<PCT10481ReplayResultRecord>(rslt, Path.Combine(logsDir, outputCsvPath));
+            }
+            else
+            {
+                StringBuilder sb = new StringBuilder();
+                Tools.ListToCsv<PCT10481ReplayResultRecord>(rslt, sb);
+                Console.WriteLine(sb.ToString());
+            }
+            return 0;
+        }
+
+        public static int PCT10481ReplayCPDs_SelectTopNXCorrIdsByModeOfTransport(string[] args)
+        {
+            string inputModes = args[0];
+            string centralLogFpath = args[1];
+            string topStr = args.Length > 2 ? args[2] : string.Empty;
+            string exceptPath = args.Length > 3 ? args[3] : string.Empty;
+            string asQueryDSLStr = args.Length > 4 ? args[4] : string.Empty;
+            string exportQueryDSLsMask = args.Length > 5 ? args[5] : string.Empty;
+            int topN;
+            if (string.IsNullOrWhiteSpace(topStr) || !int.TryParse(topStr, out topN))
+                topN = 10;
+
+            bool asQueryDSL;
+            if (string.IsNullOrWhiteSpace(asQueryDSLStr) || !bool.TryParse(asQueryDSLStr, out asQueryDSL))
+                asQueryDSL = false;
+
+            List<string> modesOfInterest = new(inputModes.Split(','));
+            var centralEntries = ESLogsJSContentParser.ReadOut(centralLogFpath);
+            Dictionary<string, List<string>> modeTrtsXCorrIds = new();
+            List<string> exceptXCorrIds = new();
+            if (!string.IsNullOrWhiteSpace(exceptPath) && System.IO.File.Exists(exceptPath))
+                exceptXCorrIds.AddRange(System.IO.File.ReadLines(exceptPath));
+            centralEntries.ForEach(e =>
+            {
+                var modeTrt = PCT10481MiscParser.CPDErrMsg_ParseModeOfTransport(e.Message);
+                if (modesOfInterest.Contains(modeTrt))
+                {
+                    if (!modeTrtsXCorrIds.ContainsKey(modeTrt)) modeTrtsXCorrIds.Add(modeTrt, new List<string>());
+                    if (!exceptXCorrIds.Contains(e.XCorrelationId))
+                        modeTrtsXCorrIds[modeTrt].Add(e.XCorrelationId);
+                }
+            });
+            List<string> dist = new();
+            //if (asQueryDSL && )
+            foreach (var key in modeTrtsXCorrIds.Keys)
+            {
+                var topX = (from x in modeTrtsXCorrIds[key] select x).Take(topN).ToList();
+                dist.AddRange(topX);
+            }
+            if (asQueryDSL)
+            {
+                Console.WriteLine(KibanaTools.FormatAsOSQueryDSL("X-CorrelationId", dist.Distinct()));
+            }
+            else
+                Console.WriteLine(string.Join(",\n", dist.Distinct()));
+            return 0;
+        }
+
+        public static int XCorrIds2DSLQuery(string[] args)
+        {
+            string inPath = args[0];
+            List<string> raw = new(System.IO.File.ReadAllLines(inPath));
+            Console.WriteLine(KibanaTools.FormatAsOSQueryDSL("X-CorrelationId", raw.Select(r => r?.Trim()).Where(r => !string.IsNullOrWhiteSpace(r)).Distinct()));
             return 0;
         }
         #endregion

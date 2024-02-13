@@ -35,7 +35,9 @@ namespace Albelli.MiscUtils.Lib.PCT10481
                     PlantCode = isV1 ? reqV1.PlantCode : reqV2.PlantCode,
                     UATvsPROD = Compare(carrUat, carrProd),
                     RequestEstimatedDeliveryDate = isV1 ? reqV1.EstimatedDeliveryDate?.ToString("s") : reqV2.EstimatedDeliveryDate?.ToString("s"),
-                    RequestEstimatedShippingDate= isV1 ? reqV1.EstimatedShippingDate?.ToString("s") : reqV2.EstimatedShippingDate?.ToString("s"),
+                    RequestEstimatedShippingDate = isV1 ? reqV1.EstimatedShippingDate?.ToString("s") : reqV2.EstimatedShippingDate?.ToString("s"),
+                    carriersCount = carrCnts[0],
+                    carriersCountProd = carrCnts[1],
                     carrierName = carrUat?.CarrierName,
                     carrierServiceId = carrUat?.CarrierServiceId,
                     carrierServiceKey = carrUat?.CarrierServiceKey,
@@ -61,6 +63,15 @@ namespace Albelli.MiscUtils.Lib.PCT10481
                     ErrorUAT = uatResp.Item1 != HttpStatusCode.OK ? uatResp.Item2 : string.Empty,
                     ErrorPROD = prodResp.Item1 != HttpStatusCode.OK ? prodResp.Item2 : string.Empty
                 };
+                var reqEDD = DateTime.Parse(currRslt.RequestEstimatedDeliveryDate);
+                var respDD = DateTime.Parse(currRslt.deliveryDate);
+                currRslt.RequestEDD_DoW = reqEDD.ToString("ddd");
+                currRslt.shippingDate_DoW = DateTime.Parse(currRslt.shippingDate).ToString("ddd");
+                currRslt.deliveryDate_DoW = respDD.ToString("ddd");
+                currRslt.DeliverToShip = $"{currRslt.shippingDate_DoW}<-{currRslt.RequestEDD_DoW}";
+                currRslt.ReqRespDeliveryDateEq = (reqEDD.Date == respDD.Date).ToString();
+                var tmp = currRslt.carrierServiceKey?.Split(':');
+                currRslt.ModeOfTransport = tmp?.Length > 1 ? tmp[1] : string.Empty;
                 target.Add(currRslt);
             }
         }
