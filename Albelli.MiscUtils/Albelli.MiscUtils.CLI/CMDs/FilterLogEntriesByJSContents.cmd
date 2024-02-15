@@ -1,0 +1,2 @@
+@echo off
+CALL FilterLogEntriesByJSContents_worker.cmd F:\home\vmdrot\EPAM\Projs\PTBX-NDC\JIRA\PCT-10481\SAL021656328554\wrong_response_hive.csv F:\home\vmdrot\EPAM\Projs\PTBX-NDC\JIRA\PCT-10481\SAL021656328554\dsl_msg.txt "System.Collections.Generic.List`1[[Albelli.MiscUtils.Lib.PCT9944.AvailableCarriersResponse, Albelli.MiscUtils.Lib, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]" "Albelli.MiscUtils.Lib.PCT9944.AvailableCarriersResponse, Albelli.MiscUtils.Lib, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" -SkipLogo -Debug

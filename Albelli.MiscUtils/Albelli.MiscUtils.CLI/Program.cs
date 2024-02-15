@@ -1725,8 +1725,64 @@ namespace Albelli.MiscUtils.CLI
         public static int XCorrIds2DSLQuery(string[] args)
         {
             string inPath = args[0];
+            string fldName = args.Length > 1 && !string.IsNullOrWhiteSpace(args[1]) ? args[1] : "X-CorrelationId";
             List<string> raw = new(System.IO.File.ReadAllLines(inPath));
-            Console.WriteLine(KibanaTools.FormatAsOSQueryDSL("X-CorrelationId", raw.Select(r => r?.Trim()).Where(r => !string.IsNullOrWhiteSpace(r)).Distinct()));
+            Console.WriteLine(KibanaTools.FormatAsOSQueryDSL(fldName, raw.Select(r => r?.Trim()).Where(r => !string.IsNullOrWhiteSpace(r)).Distinct()));
+            return 0;
+        }
+
+        public static int FilterLogEntriesByJSContents(string[] args)
+        {
+            string logPath = args[0];
+            string modelPath = args[1];
+            string modelTypeName = args[2];
+            string modelEntryTypeName = args.Length > 3 && !string.IsNullOrWhiteSpace(args[3]) ? args[3] : string.Empty;
+
+            Type modelType = Type.GetType(modelTypeName);
+            Type modelEntryType = !string.IsNullOrWhiteSpace(modelEntryTypeName) ? Type.GetType(modelEntryTypeName) : null;
+
+            object model = JsonConvert.DeserializeObject(System.IO.File.ReadAllText(modelPath), !string.IsNullOrWhiteSpace(modelEntryTypeName) != null ? modelEntryType : modelType);
+            var logEntries = ESLogsJSContentParser.ReadOut(logPath);
+            var filtered = new List<ESLogEntryEx>();
+            foreach (var entry in logEntries)
+            {
+                if (string.IsNullOrWhiteSpace(entry.JSContent))
+                    continue;
+                try { 
+                object payload = JsonConvert.DeserializeObject(entry.JSContent,modelType);
+                if (modelEntryTypeName != null)
+                {
+                    System.Collections.IEnumerable ienum = payload as System.Collections.IEnumerable;
+                    if (ienum != null)
+                    {
+                        foreach(object item in ienum)
+                        {
+                            if (true == item?.Equals(model))
+                            { 
+                                filtered.Add(entry);
+                                break;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    if (true == payload?.Equals(model))
+                        filtered.Add(entry);
+                }
+                }
+                catch(Exception ex)
+                {
+                    Console.Error.WriteLine($"Error processing entry:{ex}");
+                    Console.Error.WriteLine($"{entry.XCorrelationId}\t{entry.timestamp_cw}\t{entry.Message}");
+                    Console.Error.WriteLine(new string('-',33));
+                }
+            }
+
+            Console.WriteLine($"{filtered.Count} of {logEntries.Count}");
+            StringBuilder sb = new();
+            Tools.ListToCsv(filtered, sb);
+            Console.WriteLine(sb.ToString());
             return 0;
         }
         #endregion

@@ -33,6 +33,10 @@ namespace Albelli.MiscUtils.Lib.PCT10481
                 {
                     OriginalErrorMsg = centralLogEntry.Message,
                     PlantCode = isV1 ? reqV1.PlantCode : reqV2.PlantCode,
+                    Brand = isV1 ? reqV1.Brand : reqV2.Brand,
+                    CountryId = isV1 ? reqV1.CountryId: reqV2.CountryId,
+                    ZipCode = isV1 ? reqV1.ZipCode : reqV2.ZipCode,
+                    PackageType = isV1 ? reqV1.Package?.Type : reqV2.Package?.Type,
                     UATvsPROD = Compare(carrUat, carrProd),
                     RequestEstimatedDeliveryDate = isV1 ? reqV1.EstimatedDeliveryDate?.ToString("s") : reqV2.EstimatedDeliveryDate?.ToString("s"),
                     RequestEstimatedShippingDate = isV1 ? reqV1.EstimatedShippingDate?.ToString("s") : reqV2.EstimatedShippingDate?.ToString("s"),

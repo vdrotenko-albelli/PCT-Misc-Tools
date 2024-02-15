@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Net;
 
 namespace Albelli.MiscUtils.Lib.PCT10481
 {
@@ -6,6 +7,10 @@ namespace Albelli.MiscUtils.Lib.PCT10481
     {
         public string OriginalErrorMsg { get; set; }
         public string PlantCode { get; set; }
+        public string Brand { get; set; }
+        public string CountryId { get; set; }
+        public string ZipCode { get; set; }
+        public string PackageType { get; set; }
         public string ModeOfTransport { get; internal set; }
         public string RequestEstimatedDeliveryDate { get; set; }
         public string RequestEstimatedShippingDate { get; set; }

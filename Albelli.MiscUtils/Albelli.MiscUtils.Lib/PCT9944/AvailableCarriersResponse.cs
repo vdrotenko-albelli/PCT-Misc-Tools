@@ -40,5 +40,21 @@ namespace Albelli.MiscUtils.Lib.PCT9944
         {
             return $"{CarrierServiceId}/{CarrierServiceKey}-{DeliveryMethod}/{DeliveryType}-'?'";
         }
+
+        public override bool Equals(object? obj)
+        {
+            if (obj == null) return false;
+            AvailableCarriersResponse second = obj as AvailableCarriersResponse;
+            if (second == null) return false;
+            return PlantCode == second.PlantCode
+                && CarrierName == second.CarrierName
+                && CarrierServiceKey == second.CarrierServiceKey
+                && CarrierServiceId == second.CarrierServiceId
+                && DeliveryType == second.DeliveryType
+                && DeliveryMethod == second.DeliveryMethod
+                && DeliveryDate == second.DeliveryDate
+                && ShippingDate == second.ShippingDate
+                && NetworkId == second.NetworkId;
+        }
     }
 }
