@@ -1,17 +1,21 @@
 ﻿using Albelli.MiscUtils.Lib;
 using Albelli.MiscUtils.Lib.AWSCli;
+using Albelli.MiscUtils.Lib.CodeMetrics;
 using Albelli.MiscUtils.Lib.ESLogs;
 using Albelli.MiscUtils.Lib.Excel;
+using Albelli.MiscUtils.Lib.PCT10481;
 using Albelli.MiscUtils.Lib.PCT10679;
 using Albelli.MiscUtils.Lib.PCT9944;
 using Albelli.MiscUtils.Lib.PCT9944.v1;
 using Centiro.PromiseEngine.Client;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.VisualBasic;
 using Newtonsoft.Json;
 using ProductionOrderOperationsApi;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
 using System.Data.Odbc;
@@ -21,10 +25,13 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Reflection;
+using System.Reflection.Metadata.Ecma335;
 using System.Security;
 using System.Text;
+using System.Xml;
 using static Albelli.MiscUtils.Lib.PCT9944.Constants;
 using static System.Net.WebRequestMethods;
+using JsonFormatting = Newtonsoft.Json.Formatting;
 
 namespace Albelli.MiscUtils.CLI
 {
@@ -200,11 +207,11 @@ namespace Albelli.MiscUtils.CLI
             /*
             Console.WriteLine(new string('-', 33));
             var duplicates = eSLogEntries.GroupBy(e => e.Url).Where(g => g.Count() > 1).ToList();
-            Console.WriteLine($"{nameof(duplicates)}: {JsonConvert.SerializeObject(duplicates, Formatting.Indented)}");
+            Console.WriteLine($"{nameof(duplicates)}: {JsonConvert.SerializeObject(duplicates, JsonFormatting.Indented)}");
             */
             Console.WriteLine(new string('-', 33));
             var hourly = eSLogEntries.GroupBy(e => e.ts.Hour).Select(grp => new { Hour = grp.Key, Count = grp.Count(), RPM = (decimal)grp.Count() / 60.0M }).ToList();
-            Console.WriteLine($"{nameof(hourly)}: {JsonConvert.SerializeObject(hourly, Formatting.Indented)}");
+            Console.WriteLine($"{nameof(hourly)}: {JsonConvert.SerializeObject(hourly, JsonFormatting.Indented)}");
             var maxHourly = hourly.Max(e => e.RPM);
             Console.WriteLine($"{nameof(maxHourly)}: {maxHourly}");
             return 0;
@@ -296,10 +303,10 @@ namespace Albelli.MiscUtils.CLI
             Console.WriteLine($"Pctg of parallel requests at a second above our normal parallel VUs ({ourNormalVUs}):{aboveOurNormalBestPct_Secondly}");
             Console.WriteLine(new string('-', 33));
             var minutelyAboveNormalBest = minutely.Where(m => m.RPM > normalBestRPM).OrderByDescending(h => h.RPM);
-            Console.WriteLine($"{nameof(minutely)} above our normal best (count={minutelyAboveNormalBest.Count()} out of {minutely.Count}): {JsonConvert.SerializeObject(minutelyAboveNormalBest, Formatting.Indented)}");
+            Console.WriteLine($"{nameof(minutely)} above our normal best (count={minutelyAboveNormalBest.Count()} out of {minutely.Count}): {JsonConvert.SerializeObject(minutelyAboveNormalBest, JsonFormatting.Indented)}");
             Console.WriteLine(new string('-', 33));
             var hourlyAboveNormalBest = hourly.Where(m => m.RPM > normalBestRPM).OrderByDescending(h => h.RPM);
-            Console.WriteLine($"{nameof(hourly)} above our normal best(count={hourlyAboveNormalBest.Count()} out of {hourly.Count}): {JsonConvert.SerializeObject(hourlyAboveNormalBest, Formatting.Indented)}");
+            Console.WriteLine($"{nameof(hourly)} above our normal best(count={hourlyAboveNormalBest.Count()} out of {hourly.Count}): {JsonConvert.SerializeObject(hourlyAboveNormalBest, JsonFormatting.Indented)}");
 
             return 0;
         }
@@ -479,12 +486,12 @@ namespace Albelli.MiscUtils.CLI
                 int currPOProdsCnt = 0;
                 orderDetails.ProductionOrders.ForEach(o => o.Shipments.ForEach(s => currPOProdsCnt += s.Products.Count));
                 var currProductsIds = orderDetails.Products.Select(p => p.Id).Distinct().ToList();
-                //Console.WriteLine($"{nameof(currProductsIds)}:{JsonConvert.SerializeObject(currProductsIds, Formatting.None)}");
+                //Console.WriteLine($"{nameof(currProductsIds)}:{JsonConvert.SerializeObject(currProductsIds, JsonFormatting.None)}");
                 var currFFProductIds = orderDetails.Fulfillment.Products.Select(p => p.ProductCode).Distinct().ToList();
-                //Console.WriteLine($"{nameof(currFFProductIds)}:{JsonConvert.SerializeObject(currFFProductIds, Formatting.None)}");
+                //Console.WriteLine($"{nameof(currFFProductIds)}:{JsonConvert.SerializeObject(currFFProductIds, JsonFormatting.None)}");
                 var currPOProductIds = new List<string>();
                 orderDetails.ProductionOrders.ForEach(po => po.Shipments.ForEach(s => currPOProductIds.AddRange(s.Products.Distinct())));
-                //Console.WriteLine($"{nameof(currPOProductIds)}:{JsonConvert.SerializeObject(currPOProductIds, Formatting.None)}");
+                //Console.WriteLine($"{nameof(currPOProductIds)}:{JsonConvert.SerializeObject(currPOProductIds, JsonFormatting.None)}");
                 Console.WriteLine($"{Path.GetFileNameWithoutExtension(pair.Item2)}\t{orderDetails.Products.Count}\t{orderDetails.ProductionOrders.Count}\t{orderDetails.Fulfillment.Products.Count()}\t{currPOProdsCnt}\t{Pct(currProductsIds.Intersect(currPOProductIds).Count(), currProductsIds.Count)}\t{Pct(currProductsIds.Intersect(currFFProductIds).Count(), currProductsIds.Count)}\t{Pct(currFFProductIds.Except(currPOProductIds).Count(), currFFProductIds.Count)}\t{Pct(currPOProductIds.Except(currFFProductIds).Count(), currPOProductIds.Count)}\t{Pct(currFFProductIds.Except(currProductsIds).Count(), currFFProductIds.Count)}\t{Pct(currPOProductIds.Except(currProductsIds).Count(), currPOProductIds.Count)}\t{Pct(currPOProductIds.Intersect(currFFProductIds).Count(), currPOProductIds.Count)}\t{Pct(currFFProductIds.Intersect(currPOProductIds).Count(), currFFProductIds.Count)}");
 
             }
@@ -514,12 +521,12 @@ namespace Albelli.MiscUtils.CLI
                 int currPOProdsCnt = 0;
                 orderDetails.ProductionOrders.ForEach(o => o.Shipments.ForEach(s => currPOProdsCnt += s.Products.Count));
                 var currProductsIds = orderDetails.Products.Select(p => p.Id).Distinct().ToList();
-                //Console.WriteLine($"{nameof(currProductsIds)}:{JsonConvert.SerializeObject(currProductsIds, Formatting.None)}");
+                //Console.WriteLine($"{nameof(currProductsIds)}:{JsonConvert.SerializeObject(currProductsIds, JsonFormatting.None)}");
                 var currFFProductIds = orderDetails.Fulfillment.Products.Select(p => p.ProductCode).Distinct().ToList();
-                //Console.WriteLine($"{nameof(currFFProductIds)}:{JsonConvert.SerializeObject(currFFProductIds, Formatting.None)}");
+                //Console.WriteLine($"{nameof(currFFProductIds)}:{JsonConvert.SerializeObject(currFFProductIds, JsonFormatting.None)}");
 
 
-                //Console.WriteLine($"{nameof(currPOProductIds)}:{JsonConvert.SerializeObject(currPOProductIds, Formatting.None)}");
+                //Console.WriteLine($"{nameof(currPOProductIds)}:{JsonConvert.SerializeObject(currPOProductIds, JsonFormatting.None)}");
                 Console.WriteLine($"{Path.GetFileNameWithoutExtension(pair.Item2)}\t{string.Join(",", currFFProductIds)}");
 
             }
@@ -547,17 +554,17 @@ namespace Albelli.MiscUtils.CLI
                 int currPOProdsCnt = 0;
                 orderDetails.ProductionOrders.ForEach(o => o.Shipments.ForEach(s => currPOProdsCnt += s.Products.Count));
                 var currProductsIds = orderDetails.Products.Select(p => p.Id).Distinct().ToList();
-                //Console.WriteLine($"{nameof(currProductsIds)}:{JsonConvert.SerializeObject(currProductsIds, Formatting.None)}");
+                //Console.WriteLine($"{nameof(currProductsIds)}:{JsonConvert.SerializeObject(currProductsIds, JsonFormatting.None)}");
                 var currFFProductIds = orderDetails.Fulfillment?.Products?.Select(p => p.ProductCode).Distinct().ToList();
                 if (currFFProductIds == null) currFFProductIds = new List<string>();
-                //Console.WriteLine($"{nameof(currFFProductIds)}:{JsonConvert.SerializeObject(currFFProductIds, Formatting.None)}");
+                //Console.WriteLine($"{nameof(currFFProductIds)}:{JsonConvert.SerializeObject(currFFProductIds, JsonFormatting.None)}");
                 var currPOProductIds = new List<string>();
                 var currFForPOProductIdsRaw = new List<string>();
                 currFForPOProductIdsRaw.AddRange(currPOProductIds);
                 currFForPOProductIdsRaw.AddRange(currFFProductIds);
                 var currFForPOProductIds = currFForPOProductIdsRaw.Distinct().ToList();
                 orderDetails.ProductionOrders?.ForEach(po => po.Shipments.ForEach(s => currPOProductIds.AddRange(s.Products.Distinct())));
-                //Console.WriteLine($"{nameof(currPOProductIds)}:{JsonConvert.SerializeObject(currPOProductIds, Formatting.None)}");
+                //Console.WriteLine($"{nameof(currPOProductIds)}:{JsonConvert.SerializeObject(currPOProductIds, JsonFormatting.None)}");
                 Console.WriteLine($"{Path.GetFileNameWithoutExtension(pair.Item2)}\t{orderDetails.Products.Count}\t{orderDetails.ProductionOrders?.Count}\t{orderDetails.Fulfillment?.Products?.Count()}\t{currPOProdsCnt}\t{Pct(currProductsIds.Intersect(currPOProductIds).Count(), currProductsIds?.Count)}\t{((currFFProductIds != null) ? Pct(currProductsIds.Intersect(currFFProductIds).Count(), currProductsIds?.Count) : 0.0M)}\t{Pct(currFFProductIds?.Except(currPOProductIds).Count(), currFFProductIds?.Count)}\t{Pct(currPOProductIds.Except(currFFProductIds).Count(), currPOProductIds.Count)}\t{Pct(currFFProductIds.Except(currProductsIds).Count(), currFFProductIds.Count)}\t{Pct(currPOProductIds.Except(currProductsIds).Count(), currPOProductIds.Count)}\t{Pct(currPOProductIds.Intersect(currFFProductIds).Count(), currPOProductIds.Count)}\t{Pct(currFFProductIds.Intersect(currPOProductIds).Count(), currFFProductIds.Count)}\t{Pct(currProductsIds.Except(currPOProductIds).Count(), currProductsIds?.Count)}\t{((currFFProductIds != null) ? Pct(currProductsIds.Except(currFFProductIds).Count(), currProductsIds?.Count) : 0.0M)}\t{Pct(currProductsIds.Except(currFForPOProductIds).Count(), currProductsIds?.Count)}");
 
             }
@@ -703,7 +710,7 @@ namespace Albelli.MiscUtils.CLI
             }
 
             var stats = des.GroupBy(e => e.ParsedInput.PlantCode).Select(grp => new { PlantCode = grp.Key, Count = grp.Count() }).ToList();
-            //Console.WriteLine(JsonConvert.SerializeObject(stats, Formatting.Indented));
+            //Console.WriteLine(JsonConvert.SerializeObject(stats, JsonFormatting.Indented));
             Console.WriteLine($"PlantCode\tCount");
             stats.ForEach(s => Console.WriteLine($"{s.PlantCode}\t{s.Count}"));
             var missingPlants = inputParams.AllPlantCodes.Except(stats.Select(s => s.PlantCode).ToList());
@@ -718,7 +725,7 @@ namespace Albelli.MiscUtils.CLI
         {
             Console.WriteLine(new string('-', 33));
             Console.WriteLine($"{heading}:");
-            Console.WriteLine(JsonConvert.SerializeObject(diffs, Formatting.Indented));
+            Console.WriteLine(JsonConvert.SerializeObject(diffs, JsonFormatting.Indented));
         }
 
         private static void PrintPCT9944Keys(string heading, Dictionary<string, PCT9944FullDiffInfo> diffs)
@@ -814,7 +821,7 @@ namespace Albelli.MiscUtils.CLI
                 CalculateCarrierModel ccm = req_DLE?.ParsedInput?.Package?.WeightInGrams > 0 ? req_DLE.ParsedInput : (CalculateCarrierModel)req_API;
                 //PrintDataRows(drs, matrix);
                 var resp = filterer.Filter(ccm);
-                //Console.WriteLine(JsonConvert.SerializeObject(resp, Formatting.Indented));
+                //Console.WriteLine(JsonConvert.SerializeObject(resp, JsonFormatting.Indented));
                 Console.WriteLine($"{nameof(resp.PreFilterQuery)}:{resp.PreFilterQuery}");
                 resp.Candidates.ForEach(r => Console.WriteLine($"{r.MatrixRow.PK()}:{r.Verdict.ToString()}({string.Join(", ", r.NonMatchingFields)})\t{r.MatrixRow.Priority}"));
             }
@@ -858,7 +865,7 @@ namespace Albelli.MiscUtils.CLI
                         var currApiCorrId = Guid.NewGuid().ToString(); //$"PCT-9944-Revalidate-{Guid.NewGuid().ToString()}";
                         var corrIdExreHdrs = new Dictionary<string, string>() { { "X-CorrelationId", currApiCorrId } };
                         AvailableCarriersRequestV2 centiroV2Req = (AvailableCarriersRequestV2)dle.ParsedInput;
-                        string centiroV2ReqJson = JsonConvert.SerializeObject(centiroV2Req, Formatting.None);
+                        string centiroV2ReqJson = JsonConvert.SerializeObject(centiroV2Req, JsonFormatting.None);
                         DateTime ts = DateTime.Now;
                         var centiroResponseProd = ApiUtility.Post(apiEndpointProd, apiAuthTokenProd, centiroV2ReqJson, corrIdExreHdrs).ConfigureAwait(false).GetAwaiter().GetResult();///corrIdExreHdrs_Prod
                         List<AvailableCarriersResponse> avCarrsProd = null;
@@ -948,7 +955,7 @@ namespace Albelli.MiscUtils.CLI
                         List<AvailableCarriersResponse> avCarrsProd = null;
                         List<AvailableCarriersResponse> avCarrsUat = null;
                         AvailableCarriersRequestV2 centiroV2ReqOurs = (AvailableCarriersRequestV2)dle.ParsedInput;
-                        string centiroV2ReqJson = JsonConvert.SerializeObject(centiroV2ReqOurs, Formatting.None);
+                        string centiroV2ReqJson = JsonConvert.SerializeObject(centiroV2ReqOurs, JsonFormatting.None);
                         DateTime ts = DateTime.Now;
                         GetOptionsRequest trueCentiroV2Req = new GetOptionsRequest
                         {
@@ -982,7 +989,7 @@ namespace Albelli.MiscUtils.CLI
                         var matrixCandidates_Uat = filteredUat?.Candidates?.Where(c => c.Verdict == ACSSFilteringVerdict.Served)?.ToList()?.Select(c => c.MatrixRow.PK())?.ToArray();
 
                         //Console.WriteLine($"{ts:s}\t{CentiroV1}\t{CentiroV2}\t{matrixTopCandidate_Prod?.MatrixRow?.PK()}\t{matrixTopCandidate_Uat?.MatrixRow?.PK()}\t{currApiCorrId_Prod}\t{avCarrsProd?.FirstOrDefault()?.PK()}\t{avCarrsUat?.FirstOrDefault()?.PK()}\t{centiroV2ReqJson}");
-                        var trueCentiroV2ReqJson = JsonConvert.SerializeObject(trueCentiroV2Req, Formatting.None);
+                        var trueCentiroV2ReqJson = JsonConvert.SerializeObject(trueCentiroV2Req, JsonFormatting.None);
                         Console.WriteLine($"{ts:s}\t{CentiroV1}\t{CentiroV2}\t{CentiroV2.Split(',').Length}\t{IEnumerableToString(matrixCandidates_Prod)}\t{matrixCandidates_Prod?.Count()}\t{IEnumerableToString(matrixCandidates_Uat)}\t{matrixCandidates_Uat?.Count()}\t{matrixCandidates_Prod?.FirstOrDefault()}\t{matrixCandidates_Uat?.FirstOrDefault()}\t{currApiCorrId_Prod}\t{currApiCorrId_Uat}\t{avCarrsProd?.FirstOrDefault()?.PK()}\t{avCarrsUat?.FirstOrDefault()?.PK()}\t{centiroV2ReqJson}\t{trueCentiroV2ReqJson}");
                     }
                     catch (Exception ex)
@@ -1030,7 +1037,7 @@ namespace Albelli.MiscUtils.CLI
                 );
             }
 
-            Console.WriteLine(JsonConvert.SerializeObject(req, Formatting.Indented));
+            Console.WriteLine(JsonConvert.SerializeObject(req, JsonFormatting.Indented));
             Console.Read();
             return 0;
         }
@@ -1121,7 +1128,7 @@ namespace Albelli.MiscUtils.CLI
         {
             string srcCsv = args[0];
             var entries = ESLogsJSContentParser.ReadOut(srcCsv);
-            Console.WriteLine(JsonConvert.SerializeObject(entries, Formatting.Indented));
+            Console.WriteLine(JsonConvert.SerializeObject(entries, JsonFormatting.Indented));
             return 0;
         }
 
@@ -1224,7 +1231,7 @@ namespace Albelli.MiscUtils.CLI
             {
                 var dr = new PCT9247ReplayCompareV1vsV2Entry();
                 var XCorrelationId = Guid.NewGuid().ToString();
-                dr.CalculateCarrierModel = JsonConvert.SerializeObject(entry.Item1, Formatting.Indented);
+                dr.CalculateCarrierModel = JsonConvert.SerializeObject(entry.Item1, JsonFormatting.Indented);
                 dr.XCorrelationId = XCorrelationId;
                 dr.CalculateCarrierModelShort = entry.Item1.ToString();
                 try
@@ -1394,7 +1401,7 @@ namespace Albelli.MiscUtils.CLI
                 }
             }
             Console.WriteLine(new string('=', 33));
-            Console.WriteLine(JsonConvert.SerializeObject(plantStats, Formatting.Indented));
+            Console.WriteLine(JsonConvert.SerializeObject(plantStats, JsonFormatting.Indented));
             return 0;
         }
 
@@ -1458,7 +1465,7 @@ namespace Albelli.MiscUtils.CLI
             }
             Task.WhenAll(tasks).ConfigureAwait(false).GetAwaiter().GetResult();
             Console.WriteLine(new string('=', 33));
-            Console.WriteLine(JsonConvert.SerializeObject(plantStats, Formatting.Indented));
+            Console.WriteLine(JsonConvert.SerializeObject(plantStats, JsonFormatting.Indented));
             return 0;
         }
 
@@ -1548,6 +1555,281 @@ namespace Albelli.MiscUtils.CLI
             return 0;
         }
 
+
+        public static int PCT10481ReplayCPDs(string[] args)
+        {
+            //sample: CMDs\PCT10481ReplayCPDs.prms.sample.json
+            dynamic inputArgs = JsonConvert.DeserializeObject(System.IO.File.ReadAllText(args[0]));
+            string justPreviewStr = args.Length > 1 && !string.IsNullOrWhiteSpace(args[1]) ? args[1] : string.Empty;
+            bool justPreview;
+            if (!bool.TryParse(justPreviewStr, out justPreview))
+                justPreview = false;
+            string centralLogFpath = inputArgs.centralLogFpath;
+            string logsFileMask = inputArgs.logsFileMask;
+            string apiUrlv1 = inputArgs.apiUrlv1;
+            string apiTokenv1 = inputArgs.apiToken;
+            string apiUrlv2 = inputArgs.apiUrlv2;
+            string apiTokenv2 = inputArgs.apiToken;
+            string apiUrlv1Prod = inputArgs.apiUrlv1Prod;
+            string apiTokenv1Prod = inputArgs.apiTokenProd;
+            string apiUrlv2Prod = inputArgs.apiUrlv2Prod;
+            string apiTokenv2Prod = inputArgs.apiTokenProd;
+            string outputCsvPath = inputArgs.outputCsvPath;
+
+
+            string logsDir = Path.GetDirectoryName(centralLogFpath);
+            //string centralLogFpath = Path.Combine(logsDir, centralLog);
+            List<string> xCorrIds = new();
+
+            var centralEntries = ESLogsJSContentParser.ReadOut(centralLogFpath);
+            centralEntries.ForEach(e =>
+            {
+                if (!xCorrIds.Contains(e.XCorrelationId)) xCorrIds.Add(e.XCorrelationId);
+            });
+            var payloadsLogs = Directory.GetFiles(logsDir, logsFileMask);
+            var allEntries = new List<ESLogEntryEx>();
+            var estShipDtLc = "EstimatedShippingDate".ToLower();
+            var estShipDtNullLc = "\"EstimatedDeliveryDate\":null".ToLower();
+            long totalBruttoCount = 0;
+            foreach (var currLogPath in payloadsLogs)
+            {
+                if (currLogPath.Trim().ToLower() == centralLogFpath.Trim().ToLower())
+                    continue;
+                try
+                {
+                    var tmp = ESLogsJSContentParser.ReadOut(currLogPath);
+                    if (tmp != null)
+                        totalBruttoCount += tmp.Count;
+                    allEntries.AddRange(tmp.Where(e => xCorrIds.Contains(e.XCorrelationId) && e.Message.IndexOf("POST ") == 0 && (e.JSContent.ToLower().IndexOf(estShipDtLc) == -1 || e.JSContent.ToLower().IndexOf(estShipDtNullLc) != -1)));
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"Error reading out '{currLogPath}':{ex}");
+                }
+            }
+
+            Console.WriteLine($"{nameof(allEntries)}.Count = {allEntries.Count} (of {totalBruttoCount} brutto in total)");
+            var plantCodes = allEntries.Select(e =>
+            {
+                dynamic dto = JsonConvert.DeserializeObject(e.JSContent);
+                string plantCode = dto.PlantCode;
+                if (string.IsNullOrWhiteSpace(plantCode)) plantCode = dto.plantCode;
+                return plantCode;
+            }).GroupBy(e => e).Select(grp => new { PlantCode = grp.Key, Count = grp.Count() }).ToList();
+            Console.WriteLine(JsonConvert.SerializeObject(plantCodes, JsonFormatting.Indented));
+            var trtModesCentral = centralEntries.Select(e => new { PlantCode = PCT10481MiscParser.CPDErrMsg_ParsePlant(e.Message), ModeOfTransport = PCT10481MiscParser.CPDErrMsg_ParseModeOfTransport(e.Message) }).GroupBy(e => e.ModeOfTransport).Select(grp => new { ModeOfTransport = grp.Key, Cnt = grp.Count() }).ToList();
+            Console.WriteLine(JsonConvert.SerializeObject(trtModesCentral, JsonFormatting.Indented));
+            if (justPreview)
+            {
+                return 0;
+            }
+            List<PCT10481ReplayResultRecord> rslt = new();
+            foreach (var entry in allEntries)
+            {
+                //todo:
+                /*
+                 * 1. reverse only
+                 * 2. plant code, carrierservice name
+                 * 3. Dates: requests' delivery & shipping date, reponse - delivery & shipping date
+                 * 4. Play vs both ACC and PROD and compare results.
+                 * 5. v1 or v2
+                 */
+                var curNewReqXCorr = Guid.NewGuid().ToString();
+                var currCentralEntry = centralEntries.FirstOrDefault(e => e.XCorrelationId.Equals(entry.XCorrelationId));
+                var corrIdHdrs = new Dictionary<string, string>() { { "X-CorrelationId", curNewReqXCorr } };
+                bool isV1 = currCentralEntry.RequestPath.IndexOf("/v1/") == 0;
+                var uatResp = ApiUtility.Post(isV1 ? apiUrlv1 : apiUrlv2, isV1 ? apiTokenv1 : apiTokenv2, entry.JSContent, corrIdHdrs).ConfigureAwait(false).GetAwaiter().GetResult();
+                var prodResp = ApiUtility.Post(isV1 ? apiUrlv1Prod : apiUrlv2Prod, isV1 ? apiTokenv1Prod : apiTokenv2Prod, entry.JSContent, corrIdHdrs).ConfigureAwait(false).GetAwaiter().GetResult();
+                var err = uatResp.Item1 == HttpStatusCode.OK ? string.Empty : uatResp.Item2;
+                //Console.WriteLine($"{currCentralEntry.Message}\t{currCentralEntry.XCorrelationId}\t{curNewReqXCorr}\t{(int)uatResp.Item1}\t{err}");
+                if (uatResp.Item1 == HttpStatusCode.Unauthorized || prodResp.Item1 == HttpStatusCode.Unauthorized)
+                {
+                    Console.Error.WriteLine("Token(s) expired, sorry");
+                    break;
+                }
+                try
+                {
+                    PCT10481ResultsPrinter.FillInResults(rslt, entry, curNewReqXCorr, isV1, currCentralEntry, uatResp, prodResp);
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"{currCentralEntry.Message}\t{currCentralEntry.XCorrelationId}\tError filling in result\t{ex}");
+                }
+            }
+            //???!
+            var trtModesActual = rslt.Select(r => r.carrierServiceKey.Split(':')[1]).GroupBy(e => e).Select(grp => new { ModeOfTransport = grp.Key, Cnt = grp.Count() }).ToList();
+            Console.WriteLine(JsonConvert.SerializeObject(trtModesCentral, JsonFormatting.Indented));
+
+            var nonCoveredTrtModes = trtModesCentral.Select(m => m.ModeOfTransport).Except(trtModesActual.Select(m => m.ModeOfTransport)).ToList();
+            Console.WriteLine($"{nameof(nonCoveredTrtModes)}");
+            Console.WriteLine(JsonConvert.SerializeObject(nonCoveredTrtModes, JsonFormatting.Indented));
+
+            if (!string.IsNullOrWhiteSpace(outputCsvPath))
+            {
+                Tools.ListToCsv<PCT10481ReplayResultRecord>(rslt, Path.Combine(logsDir, outputCsvPath));
+            }
+            else
+            {
+                StringBuilder sb = new StringBuilder();
+                Tools.ListToCsv<PCT10481ReplayResultRecord>(rslt, sb);
+                Console.WriteLine(sb.ToString());
+            }
+            return 0;
+        }
+
+        public static int PCT10481ReplayCPDs_SelectTopNXCorrIdsByModeOfTransport(string[] args)
+        {
+            string inputModes = args[0];
+            string centralLogFpath = args[1];
+            string topStr = args.Length > 2 ? args[2] : string.Empty;
+            string exceptPath = args.Length > 3 ? args[3] : string.Empty;
+            string asQueryDSLStr = args.Length > 4 ? args[4] : string.Empty;
+            string exportQueryDSLsMask = args.Length > 5 ? args[5] : string.Empty;
+            int topN;
+            if (string.IsNullOrWhiteSpace(topStr) || !int.TryParse(topStr, out topN))
+                topN = 10;
+
+            bool asQueryDSL;
+            if (string.IsNullOrWhiteSpace(asQueryDSLStr) || !bool.TryParse(asQueryDSLStr, out asQueryDSL))
+                asQueryDSL = false;
+
+            List<string> modesOfInterest = new(inputModes.Split(','));
+            var centralEntries = ESLogsJSContentParser.ReadOut(centralLogFpath);
+            Dictionary<string, List<string>> modeTrtsXCorrIds = new();
+            List<string> exceptXCorrIds = new();
+            if (!string.IsNullOrWhiteSpace(exceptPath) && System.IO.File.Exists(exceptPath))
+                exceptXCorrIds.AddRange(System.IO.File.ReadLines(exceptPath));
+            centralEntries.ForEach(e =>
+            {
+                var modeTrt = PCT10481MiscParser.CPDErrMsg_ParseModeOfTransport(e.Message);
+                if (modesOfInterest.Contains(modeTrt))
+                {
+                    if (!modeTrtsXCorrIds.ContainsKey(modeTrt)) modeTrtsXCorrIds.Add(modeTrt, new List<string>());
+                    if (!exceptXCorrIds.Contains(e.XCorrelationId))
+                        modeTrtsXCorrIds[modeTrt].Add(e.XCorrelationId);
+                }
+            });
+            List<string> dist = new();
+            //if (asQueryDSL && )
+            foreach (var key in modeTrtsXCorrIds.Keys)
+            {
+                var topX = (from x in modeTrtsXCorrIds[key] select x).Take(topN).ToList();
+                dist.AddRange(topX);
+            }
+            if (asQueryDSL)
+            {
+                Console.WriteLine(KibanaTools.FormatAsOSQueryDSL("X-CorrelationId", dist.Distinct()));
+            }
+            else
+                Console.WriteLine(string.Join(",\n", dist.Distinct()));
+            return 0;
+        }
+
+        public static int XCorrIds2DSLQuery(string[] args)
+        {
+            string inPath = args[0];
+            string fldName = args.Length > 1 && !string.IsNullOrWhiteSpace(args[1]) ? args[1] : "X-CorrelationId";
+            List<string> raw = new(System.IO.File.ReadAllLines(inPath));
+            Console.WriteLine(KibanaTools.FormatAsOSQueryDSL(fldName, raw.Select(r => r?.Trim()).Where(r => !string.IsNullOrWhiteSpace(r)).Distinct()));
+            return 0;
+        }
+
+        public static int FilterLogEntriesByJSContents(string[] args)
+        {
+            string logPath = args[0];
+            string modelPath = args[1];
+            string modelTypeName = args[2];
+            string modelEntryTypeName = args.Length > 3 && !string.IsNullOrWhiteSpace(args[3]) ? args[3] : string.Empty;
+
+            Type modelType = Type.GetType(modelTypeName);
+            Type modelEntryType = !string.IsNullOrWhiteSpace(modelEntryTypeName) ? Type.GetType(modelEntryTypeName) : null;
+
+            object model = JsonConvert.DeserializeObject(System.IO.File.ReadAllText(modelPath), !string.IsNullOrWhiteSpace(modelEntryTypeName) != null ? modelEntryType : modelType);
+            var logEntries = ESLogsJSContentParser.ReadOut(logPath);
+            var filtered = new List<ESLogEntryEx>();
+            foreach (var entry in logEntries)
+            {
+                if (string.IsNullOrWhiteSpace(entry.JSContent))
+                    continue;
+                try { 
+                object payload = JsonConvert.DeserializeObject(entry.JSContent,modelType);
+                if (modelEntryTypeName != null)
+                {
+                    System.Collections.IEnumerable ienum = payload as System.Collections.IEnumerable;
+                    if (ienum != null)
+                    {
+                        foreach(object item in ienum)
+                        {
+                            if (true == item?.Equals(model))
+                            { 
+                                filtered.Add(entry);
+                                break;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    if (true == payload?.Equals(model))
+                        filtered.Add(entry);
+                }
+                }
+                catch(Exception ex)
+                {
+                    Console.Error.WriteLine($"Error processing entry:{ex}");
+                    Console.Error.WriteLine($"{entry.XCorrelationId}\t{entry.timestamp_cw}\t{entry.Message}");
+                    Console.Error.WriteLine(new string('-',33));
+                }
+            }
+
+            Console.WriteLine($"{filtered.Count} of {logEntries.Count}");
+            StringBuilder sb = new();
+            Tools.ListToCsv(filtered, sb);
+            Console.WriteLine(sb.ToString());
+            return 0;
+        }
+
+        public static int ParseCodeQualityMetrics(string[] args)
+        {
+            string xmlsPath = args[0];
+            string xmlsMask = args[1];
+            string outputPath = args[2];
+            List<ProjectQualityMetrics> rslt = new();
+            var files = Directory.GetFiles(xmlsPath, xmlsMask);
+            foreach (var xmlPath in files)
+            {
+                XmlDocument doc = new XmlDocument();
+                doc.Load(xmlPath);
+                XmlNodeList projs = doc.SelectNodes("//Targets/Target");
+                var sln = Path.GetFileName(xmlPath).Replace(".report.xml", "");
+                foreach (XmlNode proj in projs)
+                {
+                    var currRslt = new ProjectQualityMetrics();
+                    currRslt.Sln = sln;
+                    currRslt.Proj = proj.Attributes["Name"].Value;
+
+                    XmlNodeList metrics = proj.SelectNodes("Assembly/Metrics/Metric");
+                    foreach (XmlNode metric in metrics)
+                    {
+                        string currMetricName = metric.Attributes["Name"].Value;
+                        int metricValue = int.Parse(metric.Attributes["Value"].Value);
+                        switch (currMetricName)
+                        {
+                            case nameof(ProjectQualityMetrics.MaintainabilityIndex): currRslt.MaintainabilityIndex = metricValue; break;
+                            case nameof(ProjectQualityMetrics.CyclomaticComplexity): currRslt.CyclomaticComplexity = metricValue; break;
+                            case nameof(ProjectQualityMetrics.ClassCoupling): currRslt.ClassCoupling = metricValue; break;
+                            case nameof(ProjectQualityMetrics.DepthOfInheritance): currRslt.DepthOfInheritance = metricValue; break;
+                            case nameof(ProjectQualityMetrics.SourceLines): currRslt.SourceLines = metricValue; break;
+                            case nameof(ProjectQualityMetrics.ExecutableLines): currRslt.ExecutableLines = metricValue; break;
+                        }
+                    }
+                    rslt.Add(currRslt);
+                }
+            }
+            Tools.ListToCsv(rslt, outputPath);
+
+            return 0;
+        }
         #endregion
         #region aux
         public static int ExitWithComplaints(string msg, int ret)

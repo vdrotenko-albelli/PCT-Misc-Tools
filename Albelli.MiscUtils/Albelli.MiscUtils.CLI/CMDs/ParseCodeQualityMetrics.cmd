@@ -1,0 +1,2 @@
+@echo off
+CALL ParseCodeQualityMetrics_worker.cmd F:\home\vmdrot\EPAM\Projs\PTBX-NDC\JIRA\PCT-TechHealthAsmt\reports "*.report.xml" F:\home\vmdrot\EPAM\Projs\PTBX-NDC\JIRA\PCT-TechHealthAsmt\reports\AddressChanger.sln.report.xml.csv
