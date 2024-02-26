@@ -7,6 +7,8 @@ using Albelli.MiscUtils.Lib.PCT10481;
 using Albelli.MiscUtils.Lib.PCT10679;
 using Albelli.MiscUtils.Lib.PCT9944;
 using Albelli.MiscUtils.Lib.PCT9944.v1;
+using Albelli.MiscUtils.Lib.SQSUtils;
+using Amazon;
 using Centiro.PromiseEngine.Client;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualBasic;
@@ -1830,6 +1832,28 @@ namespace Albelli.MiscUtils.CLI
 
             return 0;
         }
+
+        public static int PeekSQSMessages(string[] args)
+        {
+            string awsAcctId = args[0];
+            string queueName = args[1];
+            string nrOfMessagesStr = TryGetArg(args,2,string.Empty);
+            string visibilityTimeoutStr = TryGetArg(args, 3, string.Empty);
+            string attrNames = TryGetArg(args,4,string.Empty);
+            string msgAttrNames = TryGetArg(args,5,string.Empty);
+
+            int nrOfMessages;
+            int visibilityTimeout;
+            if (!int.TryParse(nrOfMessagesStr, out nrOfMessages)) nrOfMessages = -1;
+            if (!int.TryParse(visibilityTimeoutStr, out visibilityTimeout)) visibilityTimeout = -1;
+            List<string> lstAttrs = !string.IsNullOrWhiteSpace(attrNames) ? new List<string>(attrNames.Split(',')) : null;
+            List<string> lstMsgAttrs = !string.IsNullOrWhiteSpace(msgAttrNames) ? new List<string>(msgAttrNames.Split(',')) : null;
+
+            var func = nrOfMessages != -1 && visibilityTimeout != -1 ? SQSUtility.PeekSQSMessages(RegionEndpoint.EUWest1, awsAcctId, queueName, nrOfMessages, visibilityTimeout, attrNames: lstAttrs, msgAttrNames: lstMsgAttrs) : nrOfMessages == -1 && visibilityTimeout == -1 ? SQSUtility.PeekSQSMessages(RegionEndpoint.EUWest1, awsAcctId, queueName, attrNames: lstAttrs, msgAttrNames: lstMsgAttrs) : nrOfMessages != -1 ? SQSUtility.PeekSQSMessages(RegionEndpoint.EUWest1, awsAcctId, queueName, nrOfMessages, attrNames: lstAttrs, msgAttrNames: lstMsgAttrs) : SQSUtility.PeekSQSMessages(RegionEndpoint.EUWest1, awsAcctId, queueName, visibilityTimeout: visibilityTimeout, attrNames: lstAttrs, msgAttrNames: lstMsgAttrs);
+            var msgs = func.ConfigureAwait(false).GetAwaiter().GetResult();
+            Console.WriteLine(JsonConvert.SerializeObject(msgs, JsonFormatting.Indented));
+            return 0;
+        }
         #endregion
         #region aux
         public static int ExitWithComplaints(string msg, int ret)
@@ -1855,6 +1879,11 @@ namespace Albelli.MiscUtils.CLI
             }
             sbArgs.AppendLine(")");
             Console.WriteLine(sbArgs.ToString());
+        }
+
+        private static string TryGetArg(string[] args, int ordinal, string defaultValue)
+        {
+            return args.Length > ordinal ? args[ordinal] : defaultValue;
         }
         #endregion
     }
