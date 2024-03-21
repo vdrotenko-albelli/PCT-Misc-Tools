@@ -7,12 +7,16 @@ using Albelli.MiscUtils.Lib.PCT10481;
 using Albelli.MiscUtils.Lib.PCT10679;
 using Albelli.MiscUtils.Lib.PCT9944;
 using Albelli.MiscUtils.Lib.PCT9944.v1;
+using Albelli.MiscUtils.Lib.SQSUtils;
+using Amazon;
 using Centiro.PromiseEngine.Client;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualBasic;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using ProductionOrderOperationsApi;
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -1751,34 +1755,35 @@ namespace Albelli.MiscUtils.CLI
             {
                 if (string.IsNullOrWhiteSpace(entry.JSContent))
                     continue;
-                try { 
-                object payload = JsonConvert.DeserializeObject(entry.JSContent,modelType);
-                if (modelEntryTypeName != null)
+                try
                 {
-                    System.Collections.IEnumerable ienum = payload as System.Collections.IEnumerable;
-                    if (ienum != null)
+                    object payload = JsonConvert.DeserializeObject(entry.JSContent, modelType);
+                    if (modelEntryTypeName != null)
                     {
-                        foreach(object item in ienum)
+                        System.Collections.IEnumerable ienum = payload as System.Collections.IEnumerable;
+                        if (ienum != null)
                         {
-                            if (true == item?.Equals(model))
-                            { 
-                                filtered.Add(entry);
-                                break;
+                            foreach (object item in ienum)
+                            {
+                                if (true == item?.Equals(model))
+                                {
+                                    filtered.Add(entry);
+                                    break;
+                                }
                             }
                         }
                     }
+                    else
+                    {
+                        if (true == payload?.Equals(model))
+                            filtered.Add(entry);
+                    }
                 }
-                else
-                {
-                    if (true == payload?.Equals(model))
-                        filtered.Add(entry);
-                }
-                }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     Console.Error.WriteLine($"Error processing entry:{ex}");
                     Console.Error.WriteLine($"{entry.XCorrelationId}\t{entry.timestamp_cw}\t{entry.Message}");
-                    Console.Error.WriteLine(new string('-',33));
+                    Console.Error.WriteLine(new string('-', 33));
                 }
             }
 
@@ -1830,6 +1835,153 @@ namespace Albelli.MiscUtils.CLI
 
             return 0;
         }
+
+        public static int DLQMsgsAnalyze(string[] args)
+        {
+            string inJsonPath = args[0];
+            string keyPropsPaths = args[1];
+
+            string[] keyProps = keyPropsPaths.Split(',');
+            JArray jarr = JArray.Parse(System.IO.File.ReadAllText(inJsonPath));
+            Dictionary<string, Dictionary<string,int>> grps = new();
+            for(int i = 0; i < jarr.Count; i++)
+            {
+                JObject entry = JObject.Parse(jarr[i].ToString());
+                foreach (var keyProp in keyProps)
+                {
+                    //Console.WriteLine($"[{i}].{keyProp}:'{(string)entry.SelectToken(keyProp)}'");
+                    if (!grps.ContainsKey(keyProp))
+                        grps.Add(keyProp, new());
+                    var grp = grps[keyProp];
+                    string currKey = (string)entry.SelectToken(keyProp);
+                    if (!grp.ContainsKey(keyProp))
+                        grp.Add(currKey,0);
+                    grp[currKey]++;
+                }
+                i++;
+            }
+            Console.WriteLine(JsonConvert.SerializeObject(grps, JsonFormatting.Indented));
+
+            foreach (var keyProp in grps.Keys)
+            {
+                var currDupls = grps[keyProp].Where(g => g.Value > 1).Select(kvp => new Tuple<string, int>(kvp.Key, kvp.Value)).ToList();
+                Console.WriteLine($"{keyProp} ({currDupls.Count}):");
+                currDupls.ForEach(t => Console.WriteLine($"  {t.Item1}:{t.Item2}"));
+            }
+            return 0;
+        }
+        public static int PeekSQSMessages(string[] args)
+        {
+            string awsAcctId = args[0];
+            string queueName = args[1];
+            string nrOfMessagesStr = TryGetArg(args, 2, string.Empty);
+            string visibilityTimeoutStr = TryGetArg(args, 3, string.Empty);
+            string attrNames = TryGetArg(args, 4, string.Empty);
+            string msgAttrNames = TryGetArg(args, 5, string.Empty);
+            string entireQueueStr = TryGetArg(args, 6, string.Empty);
+
+            int nrOfMessages;
+            int visibilityTimeout;
+            if (!int.TryParse(nrOfMessagesStr, out nrOfMessages)) nrOfMessages = -1;
+            if (!int.TryParse(visibilityTimeoutStr, out visibilityTimeout)) visibilityTimeout = -1;
+            List<string> lstAttrs = !string.IsNullOrWhiteSpace(attrNames) ? new List<string>(attrNames.Split(',')) : null;
+            List<string> lstMsgAttrs = !string.IsNullOrWhiteSpace(msgAttrNames) ? new List<string>(msgAttrNames.Split(',')) : null;
+            bool entireQueue;
+            if (!bool.TryParse(entireQueueStr, out entireQueue)) entireQueue = false;
+            var rargs = new PeekSQSMessagesRequestArgs();
+            rargs.awsRegion = RegionEndpoint.EUWest1;
+            rargs.queueName = queueName;
+            rargs.awsAccId = awsAcctId;
+            if (nrOfMessages != -1)
+                rargs.nrOfMsgs = nrOfMessages;
+            if (visibilityTimeout != -1)
+                rargs.visibilityTimeout = visibilityTimeout;
+            rargs.attrNames = lstAttrs;
+            rargs.msgAttrNames = lstMsgAttrs;
+            rargs.entireQueue = entireQueue;
+            var func = SQSUtility.PeekSQSMessages(rargs);
+            var msgs = func.ConfigureAwait(false).GetAwaiter().GetResult();
+            Console.WriteLine(JsonConvert.SerializeObject(msgs, JsonFormatting.Indented));
+            return 0;
+        }
+
+        public static int ApiTestGets(string[] args)
+        {
+            string env = args[0];
+            string inputXls = args[1];
+            string xlsSheet = args[2];
+            string baseUrl = args[3];
+            string token = args[4];
+
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                Console.Error.WriteLine($"{nameof(token)} is required.");
+                return -1;
+            }
+            Console.WriteLine("Env\tClient\tProj\tTestEndpoint\tHTTPStatus\tError");
+            using (DataTable ds = ExcelReader.Read(inputXls, xlsSheet))
+            {
+                foreach (DataRow dr in ds.Rows)
+                {
+                    var client = dr["Client"] as string;
+                    var proj = dr["Proj"] as string;
+                    var ep = dr["TestEndpoint"] as string;
+                    var currUrl = $"{baseUrl}{ep}";
+                    int status = 0;
+                    var currErr = string.Empty;
+                    try
+                    {
+                        var currRes = ApiUtility.Get(currUrl, token);
+                        status = (int)currRes.Item1;
+                        //if (currRes.Item1 == HttpStatusCode.Unauthorized)
+                        //{
+                        //    Console.Error.WriteLine("Token expired, sorry...");
+                        //    break;
+                        //}
+                    }
+                    catch (Exception ex)
+                    {
+                        currErr = ex.Message;
+                    }
+                    var statusStr = string.Empty;
+                    if (status > 0)
+                    {
+                        statusStr = $"{status}|{(HttpStatusCode)status}";
+                    }
+                    else
+                        statusStr = $"{status}";
+                    Console.WriteLine($"{env}\t{client}\t{proj}\t{ep}\t{statusStr}\t{currErr}");
+                }
+            }
+
+            return 0;
+        }
+
+        public static int ReactAppEnableRunLocal(string[] args)
+        {
+            string packageJsonPath = args[0];
+            string configJsonPath = TryGetArg(args, 1, string.Empty);
+            string beApiUrl = TryGetArg(args, 2, string.Empty);
+
+            dynamic packageJson = JsonConvert.DeserializeObject(System.IO.File.ReadAllText(packageJsonPath));
+            string oldStart = packageJson?.scripts?.start;
+            if (oldStart == "react-scripts start -o")
+            {
+                packageJson.scripts.start = "react-scripts --openssl-legacy-provider start -o";
+                System.IO.File.WriteAllText(packageJsonPath, JsonConvert.SerializeObject(packageJson, JsonFormatting.Indented));
+                Console.WriteLine("Patched scripts.start");
+            }
+
+            if (!string.IsNullOrWhiteSpace(beApiUrl) && !string.IsNullOrWhiteSpace(configJsonPath))
+            {
+                dynamic configJson = JsonConvert.DeserializeObject(System.IO.File.ReadAllText(configJsonPath));
+                configJson.backend.url = beApiUrl;
+                System.IO.File.WriteAllText(configJsonPath, JsonConvert.SerializeObject(configJson, JsonFormatting.Indented));
+                Console.WriteLine("Patched backend.url");
+            }
+            
+            return 0;
+        }
         #endregion
         #region aux
         public static int ExitWithComplaints(string msg, int ret)
@@ -1855,6 +2007,11 @@ namespace Albelli.MiscUtils.CLI
             }
             sbArgs.AppendLine(")");
             Console.WriteLine(sbArgs.ToString());
+        }
+
+        private static string TryGetArg(string[] args, int ordinal, string defaultValue)
+        {
+            return args.Length > ordinal ? args[ordinal] : defaultValue;
         }
         #endregion
     }
