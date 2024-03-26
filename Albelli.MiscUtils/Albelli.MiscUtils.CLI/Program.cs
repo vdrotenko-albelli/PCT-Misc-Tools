@@ -9,6 +9,8 @@ using Albelli.MiscUtils.Lib.PCT9944;
 using Albelli.MiscUtils.Lib.PCT9944.v1;
 using Albelli.MiscUtils.Lib.SQSUtils;
 using Amazon;
+using Amazon.Util;
+using BusinessLogic.Dtos.ProductOptionsDimensionGenerator;
 using Centiro.PromiseEngine.Client;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualBasic;
@@ -1980,6 +1982,103 @@ namespace Albelli.MiscUtils.CLI
                 Console.WriteLine("Patched backend.url");
             }
             
+            return 0;
+        }
+
+        public static int PCT11312_Export(string[] args)
+        {
+            string plantsProductTypesPath = args[0];
+            string myFactoryApiUrl = args[1];
+            string physProdCatApiUrl = args[2];
+            string pkgCalcApiUrl = args[3];
+            string myFactoryApiToken = args[4];
+            string physProdCatApiToken = args[5];
+            string pkgCalcApiToken = args[6];
+            string saveAsPfx = args[7];
+
+            var myFactoryApiUri = new Uri(myFactoryApiUrl);
+            var pkgCalcApiUri = new Uri(pkgCalcApiUrl);
+            string myFactoryApiActualToken = pkgCalcApiUri.Host == myFactoryApiUri.Host ? pkgCalcApiToken : myFactoryApiToken;
+            List<Tuple<string,List<string>>> plantsProducts = new();
+            System.IO.File.ReadAllLines(plantsProductTypesPath).ToList().ForEach(ln => {
+                var trimmed = ln?.Trim();
+                if (!string.IsNullOrWhiteSpace(trimmed)) 
+                {
+                    var flds = trimmed.Split('\t');
+                    if (flds.Length >= 2)
+                    {
+                        var prodCat = flds[0]?.Trim();
+                        List<string> currPlants = flds[1]?.Trim().Split(',').ToList().Select(s => s?.Trim()).Where(p => !string.IsNullOrWhiteSpace(p)).ToList();
+                        plantsProducts.Add(new Tuple<string, List<string>>(prodCat, currPlants));
+                    }
+                }
+            });
+
+            var allPhysProductsResp = ApiUtility.Get(physProdCatApiUrl, physProdCatApiToken);
+            if (allPhysProductsResp.Item1 != HttpStatusCode.OK)
+            {
+                Console.Error.WriteLine($"{DateTime.Now:s}\tFailed to get physical products:{allPhysProductsResp.Item1}");
+                return 1;
+            }
+            PhysicalProductCatalog.Client.Models.GetAllPhysicalProductsResponse allPhysProducts = JsonConvert.DeserializeObject<PhysicalProductCatalog.Client.Models.GetAllPhysicalProductsResponse>(allPhysProductsResp.Item2);
+
+            var plants = plantsProducts.SelectMany(t => t.Item2).Distinct().ToList();
+            Dictionary<string, Shipping.PackagingCalculator.Models.GetAllProductsResponse> prodCatsByPlant = new();
+
+            foreach (var plant in plants)
+            {
+                var currProdsByPlantResp = ApiUtility.Get($"{myFactoryApiUrl}{plant}", myFactoryApiActualToken);
+                if (currProdsByPlantResp.Item1 != HttpStatusCode.OK)
+                {
+                    Console.Error.WriteLine($"{DateTime.Now:s}\tError getting product categories by plant ({plant}):{currProdsByPlantResp.Item1}");
+                    continue;
+                }
+                Shipping.PackagingCalculator.Models.GetAllProductsResponse prods = JsonConvert.DeserializeObject<Shipping.PackagingCalculator.Models.GetAllProductsResponse>(currProdsByPlantResp.Item2);
+                prodCatsByPlant.Add(plant, prods);
+            }
+
+            // var unsupportedInputs = todo!
+            foreach (var plantCat in plantsProducts)
+            {
+                CalculateProductDimensionsRequest req = new();
+                if (req.Tasks == null)
+                    req.Tasks = new List<CalculateProductDimensionsTask>();
+                foreach (var plant in plantCat.Item2)
+                {
+                    if (!prodCatsByPlant.ContainsKey(plant))
+                    {
+                        Console.WriteLine($"{DateTime.Now:s}\t!prodCatsByPlant.ContainsKey({plant})");
+                        continue;
+                    }
+                    var paps = prodCatsByPlant[plant].ProductCategories.FirstOrDefault(pc => string.Compare(pc.Name,plantCat.Item1, true) == 0)?.Articles.Select(a => a.ArticleCode.ToUpper()).ToList();
+                    var papsPhysProds = allPhysProducts?.PhysicalProducts?.Where(a => !string.IsNullOrWhiteSpace(a?.Code) && true == paps?.Contains(a?.Code?.ToUpper()));
+                    req.Tasks.Add(new()
+                    {
+                        FactoryCode = plant,
+                        ProductCodes = paps,
+                        Options = papsPhysProds.SelectMany(a => a.Options).Select(o => new ProductOption() { IsRequired = true, OptionName = o.Key, OptionValues = o.Values.Select(v => v.Value).ToList()}).DistinctBy(o => o.OptionName).ToList()
+                    }) ;
+                }
+                var reqStr = JsonConvert.SerializeObject(req, JsonFormatting.None);
+                var calcResp = ApiUtility.Post(pkgCalcApiUrl, pkgCalcApiToken, reqStr).ConfigureAwait(false).GetAwaiter().GetResult();
+                if (calcResp.Item1 != HttpStatusCode.OK)
+                {
+                    Console.Error.WriteLine($"{DateTime.Now:s}\t{plantCat.Item1}|{string.Join(',',plantCat.Item2)}:Calculate request failed({(int)calcResp.Item1}|{calcResp.Item1}):{calcResp.Item2}\r\n{reqStr}");
+                }
+                else 
+                {
+                    var currSaveAs = Path.Combine(saveAsPfx, string.Format("{0}_{1}.csv", string.Join('_', plantCat.Item2), plantCat.Item1));
+                    Console.WriteLine($"{DateTime.Now:s}\t{currSaveAs}::{nameof(req)}:");
+                    Console.WriteLine(JsonConvert.SerializeObject(req, JsonFormatting.Indented));
+                    try {
+                        System.IO.File.WriteAllText(currSaveAs, calcResp.Item2);
+                    } catch (Exception ex) {
+                        Console.Error.WriteLine($"{DateTime.Now:s}\tError saving export to '{currSaveAs}':{ex}");
+                    }
+                    
+                    Console.WriteLine(new string('-',33));
+                }
+            }
             return 0;
         }
         #endregion

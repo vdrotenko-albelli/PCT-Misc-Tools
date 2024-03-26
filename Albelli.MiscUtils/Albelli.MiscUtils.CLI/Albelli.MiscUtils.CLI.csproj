@@ -24,6 +24,15 @@
     <Reference Include="Albelli.CustomerCare.Models.Elastic">
       <HintPath>D:\git\PTBX-NDC\srcs\Customer-Backoffice\src\Albelli.CustomerCare\Albelli.CustomerCare.Backoffice\bin\Debug\net6.0\Albelli.CustomerCare.Models.Elastic.dll</HintPath>
     </Reference>
+    <Reference Include="BusinessLogic">
+      <HintPath>D:\git\PTBX-NDC\srcs\Shipping-PackagingCalculator\src\BusinessLogic\bin\Debug\net6.0\BusinessLogic.dll</HintPath>
+    </Reference>
+    <Reference Include="PhysicalProductCatalogClient">
+      <HintPath>D:\git\PTBX-NDC\srcs\Virtual-Plant-MyFactory-Api\src\PhysicalProductCatalogClient\bin\Debug\net6.0\PhysicalProductCatalogClient.dll</HintPath>
+    </Reference>
+    <Reference Include="ShippingPackagingCalculatorClient">
+      <HintPath>D:\git\PTBX-NDC\srcs\Virtual-Plant-MyFactory-Api\src\ShippingPackagingCalculator\bin\Debug\net6.0\ShippingPackagingCalculatorClient.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>
