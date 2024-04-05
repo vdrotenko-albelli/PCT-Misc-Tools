@@ -26,6 +26,7 @@ using System.Data;
 using System.Data.Common;
 using System.Data.Odbc;
 using System.Dynamic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -2038,6 +2039,24 @@ namespace Albelli.MiscUtils.CLI
             }
 
             // var unsupportedInputs = todo!
+            Console.WriteLine("Unsupported product groups(categories) by plant(s):");
+            foreach (var plant in plants)
+            {
+                var currProdGroupsRequested = plantsProducts.Where(pp => pp.Item2.Contains(plant)).Select(pp => pp.Item1).Distinct().ToList();
+                var currUnsupported = currProdGroupsRequested.Except(!prodCatsByPlant.ContainsKey(plant) ? Enumerable.Empty<string>() : prodCatsByPlant[plant].ProductCategories.Select(c => c.Name).ToList());
+                if (true == currUnsupported?.Any())
+                {
+                    Console.WriteLine($"{plant}:{string.Join(',', currUnsupported)}");
+                }
+            }
+            Console.WriteLine(new string('-', 33));
+            Console.WriteLine($"{nameof(prodCatsByPlant)}:");
+            Dictionary<string, List<string>> prodCatsByPlantSimple = new();
+            foreach (var key in prodCatsByPlant.Keys) {
+                prodCatsByPlantSimple.Add(key, prodCatsByPlant[key].ProductCategories.Select(c => c.Name).ToList());
+            }
+            Console.WriteLine(JsonConvert.SerializeObject(prodCatsByPlantSimple, JsonFormatting.Indented));
+            Console.WriteLine(new string('-', 33));
             foreach (var plantCat in plantsProducts)
             {
                 CalculateProductDimensionsRequest req = new();
@@ -2059,6 +2078,12 @@ namespace Albelli.MiscUtils.CLI
                         Options = papsPhysProds.SelectMany(a => a.Options).Select(o => new ProductOption() { IsRequired = true, OptionName = o.Key, OptionValues = o.Values.Select(v => v.Value).ToList()}).DistinctBy(o => o.OptionName).ToList()
                     }) ;
                 }
+                //detect incomplete tasks:
+                var incompleteTasks = req.Tasks.Where(t => false == t?.ProductCodes?.Any() && false == t.Options?.Any()).ToList();
+                incompleteTasks?.ForEach(t => { Console.Error.WriteLine($"Incomplete task:{JsonConvert.SerializeObject(t, JsonFormatting.None)}");
+                    req.Tasks.Remove(t);
+                });
+                
                 var reqStr = JsonConvert.SerializeObject(req, JsonFormatting.None);
                 var calcResp = ApiUtility.Post(pkgCalcApiUrl, pkgCalcApiToken, reqStr).ConfigureAwait(false).GetAwaiter().GetResult();
                 if (calcResp.Item1 != HttpStatusCode.OK)
@@ -2067,7 +2092,8 @@ namespace Albelli.MiscUtils.CLI
                 }
                 else 
                 {
-                    var currSaveAs = Path.Combine(saveAsPfx, string.Format("{0}_{1}.csv", string.Join('_', plantCat.Item2), plantCat.Item1));
+                    //var currSaveAs = Path.Combine(saveAsPfx, string.Format("{0}_{1}.csv", string.Join('_', plantCat.Item2), plantCat.Item1));
+                    var currSaveAs = Path.Combine(saveAsPfx, string.Format("{0}_{1}.csv", string.Join('_', req.Tasks.Select(t => t.FactoryCode).ToList()), plantCat.Item1));
                     Console.WriteLine($"{DateTime.Now:s}\t{currSaveAs}::{nameof(req)}:");
                     Console.WriteLine(JsonConvert.SerializeObject(req, JsonFormatting.Indented));
                     try {
