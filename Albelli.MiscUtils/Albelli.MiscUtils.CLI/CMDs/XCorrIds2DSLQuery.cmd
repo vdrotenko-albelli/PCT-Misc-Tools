@@ -10,4 +10,7 @@ REM CALL XCorrIds2DSLQuery_worker.cmd F:\home\vmdrot\EPAM\Projs\PTBX-NDC\JIRA\PC
 REM CALL XCorrIds2DSLQuery_worker.cmd F:\home\vmdrot\EPAM\Projs\PTBX-NDC\JIRA\PCT-11201\xcorrids.txt -SkipLogo
 REM CALL XCorrIds2DSLQuery_worker.cmd F:\home\vmdrot\EPAM\Projs\PTBX-NDC\JIRA\PCT-10481\eslogs\0221\xcorrids.txt -SkipLogo
 REM CALL XCorrIds2DSLQuery_worker.cmd F:\home\vmdrot\EPAM\Projs\PTBX-NDC\JIRA\PCT-11199\traceids.txt TraceId -SkipLogo
-CALL XCorrIds2DSLQuery_worker.cmd F:\home\vmdrot\EPAM\Projs\PTBX-NDC\JIRA\PCT-11199\xcorrids.txt -SkipLogo
+REM CALL XCorrIds2DSLQuery_worker.cmd F:\home\vmdrot\EPAM\Projs\PTBX-NDC\JIRA\PCT-11199\xcorrids.txt -SkipLogo
+REM CALL XCorrIds2DSLQuery_worker.cmd F:\home\vmdrot\EPAM\Projs\PTBX-NDC\JIRA\PCT-11373\logs\xcorrids.txt
+REM CALL XCorrIds2DSLQuery_worker.cmd 
+CALL XCorrIds2DSLQuery_worker.cmd F:\home\vmdrot\EPAM\Projs\PTBX-NDC\JIRA\PCT-11382\xcorrids.txt -SkipLogo

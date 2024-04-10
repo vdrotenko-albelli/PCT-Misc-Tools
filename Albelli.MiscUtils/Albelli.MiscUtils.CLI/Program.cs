@@ -2107,6 +2107,88 @@ namespace Albelli.MiscUtils.CLI
             }
             return 0;
         }
+
+        public static int GenSpecFlowFeatureStepStubs(string[] args)
+        {
+            string inputStepsPath = args[0];
+            List<Tuple<string, string>> inputQueue = new();
+            var lns = System.IO.File.ReadAllLines(inputStepsPath).Where(l => !string.IsNullOrWhiteSpace(l?.Trim())).Select(l => l?.Trim().Replace("\t","")).ToList();
+            lns.ForEach(ln => {
+                int spacePos = ln.IndexOf(' ');
+                if (spacePos != -1)
+                {
+                    var predicate = ln.Substring(0, spacePos)?.Trim();
+                    var methodNarration = ln.Substring(spacePos+1)?.Trim();
+                    inputQueue.Add(new Tuple<string, string>(predicate, methodNarration));
+                }
+            });
+            for (int i = 0; i < inputQueue.Count; i++)
+            {
+                var predicate = inputQueue[i].Item1;
+                if (predicate == "And")
+                {
+                    predicate = FindLastPreviousNonAndPredicate(inputQueue, i);
+                }
+                string stepMethodNameAndSignature = GenerateSpecFlowStepBindingMethodName(inputQueue[i].Item2);
+                Console.WriteLine($"[{predicate}(@\"{SpecFlowReplaceArgs(inputQueue[i].Item2)}\")]\r\npublic void {stepMethodNameAndSignature}\r\n{{\r\n}}");
+            }
+            return 0;
+        }
+
+        private static object SpecFlowReplaceArgs(string narration)
+        {
+            var words = narration.Split(' ');
+            var signatureArgNames = new List<string>();
+            for (int w = 0; w < words.Length; w++)
+            {
+                words[w] = words[w].Replace(",", "");
+                if (words[w][0] == '<' && words[w][words[w].Length - 1] == '>')
+                {
+                    signatureArgNames.Add(words[w]);
+                }
+            }
+            string rslt = narration;
+            signatureArgNames.ForEach(a =>
+            {
+                rslt = rslt.Replace(a, "(.*)");
+            });
+            return rslt;
+        }
+
+        private static string GenerateSpecFlowStepBindingMethodName(string narration)
+        {
+            var words = narration.Split(' ');
+            var signatureArgNames = new List<string>();
+            List<string> methodNameWords = new();
+            for (int w = 0; w < words.Length; w++)
+            {
+                words[w] = words[w].Replace(",", "");
+                if (words[w][0] == '<' && words[w][words[w].Length -1] == '>')
+                {
+                    signatureArgNames.Add(words[w].Substring(1, words[w].Length - 2));
+                    continue;
+                }
+                words[w] = $"{words[w].Substring(0, 1).ToUpper()}{words[w].Substring(1)}";
+                methodNameWords.Add(words[w]);
+            }
+            for(int i = 0; i< signatureArgNames.Count; i++)
+            {
+                signatureArgNames[i] = $"string {signatureArgNames[i]}";
+            }
+            return string.Format("{0}({1})", string.Join("", methodNameWords), string.Join(", ",signatureArgNames.Distinct()));
+        }
+
+        private static string FindLastPreviousNonAndPredicate(List<Tuple<string, string>> queue, int index)
+        {
+            for (int i = index - 1; i >= 0; i--)
+            {
+                if (queue[i].Item1 == "And")
+                    continue;
+                else
+                    return queue[i].Item1;
+            }
+            return queue[0].Item1;
+        }
         #endregion
         #region aux
         public static int ExitWithComplaints(string msg, int ret)
