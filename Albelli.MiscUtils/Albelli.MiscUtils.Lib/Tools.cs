@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 
 namespace Albelli.MiscUtils.Lib
 {
@@ -66,6 +67,23 @@ namespace Albelli.MiscUtils.Lib
             var sb = new StringBuilder();
             ListToCsv<T>(dt, sb);
             File.WriteAllText(outputPath, sb.ToString());
+        }
+        public static T ReadXML<T>(string fromFile)
+        {
+            using (FileStream fs = new FileStream(fromFile, FileMode.Open))
+            {
+                XmlSerializer serializer = new XmlSerializer(typeof(T));
+                object o = serializer.Deserialize(fs);
+                return (T)o;
+            }
+        }
+        public static void WriteXML<T>(T obj, string saveAs)
+        {
+            using (FileStream fs = File.Create(saveAs))
+            {
+                XmlSerializer serializer = new XmlSerializer(typeof(T));
+                serializer.Serialize(fs, obj);
+            }
         }
     }
 }
