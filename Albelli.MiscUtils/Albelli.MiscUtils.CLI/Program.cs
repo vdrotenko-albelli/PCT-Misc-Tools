@@ -3,6 +3,7 @@ using Albelli.MiscUtils.Lib.AWSCli;
 using Albelli.MiscUtils.Lib.CodeMetrics;
 using Albelli.MiscUtils.Lib.ESLogs;
 using Albelli.MiscUtils.Lib.Excel;
+using Albelli.MiscUtils.Lib.ImageArchive;
 using Albelli.MiscUtils.Lib.PCT10481;
 using Albelli.MiscUtils.Lib.PCT10679;
 using Albelli.MiscUtils.Lib.PCT9944;
@@ -1741,6 +1742,39 @@ namespace Albelli.MiscUtils.CLI
             return 0;
         }
 
+        public static int XCorrIds2DSLQueryEx(string[] args)
+        {
+            string inPath = args[0];
+            string fldNames = args.Length > 1 && !string.IsNullOrWhiteSpace(args[1]) ? args[1] : "_source.X-CorrelationId,_source.TraceId,_source.CorrelationId";
+            var fldNamesLst = fldNames.Split(',').Select(s => s?.Trim()).Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
+            Dictionary<string, string> normalizedFieldNames = new();
+            foreach (var fldName in fldNamesLst)
+            {
+                var normalizedFieldName = fldName.Trim();
+                if (normalizedFieldName.IndexOf(".") != -1)
+                    normalizedFieldName = normalizedFieldName.Split('.')[1]?.Trim();
+                normalizedFieldNames.Add(fldName, normalizedFieldName);
+            }
+            var dt = Tools.Csv2DataTable(path: inPath, delimiter:',', maxBufferSize: 102400);
+            Dictionary<string, List<string>> expressions = new();
+            var zeroGuids = new List<string> { Guid.Empty.ToString(), "(null)", "(NULL)", "null", "-", "NULL" };
+            foreach (DataRow dr in dt.Rows)
+            {
+                foreach (var fld in fldNamesLst)
+                {
+                    if (!expressions.ContainsKey(normalizedFieldNames[fld]))
+                        expressions.Add(normalizedFieldNames[fld],new List<string>());
+                    var currFldVal = dt.Columns.Contains(fld) ? dr[fld] as string : null;
+                    if (!string.IsNullOrWhiteSpace(currFldVal) && !zeroGuids.Contains(currFldVal) && !expressions[normalizedFieldNames[fld]].Contains(currFldVal))
+                        expressions[normalizedFieldNames[fld]].Add(currFldVal);
+                }
+            }
+            
+            Console.WriteLine(KibanaTools.FormatAsOSQueryDSL(expressions));
+            return 0;
+        }
+
+
         public static int FilterLogEntriesByJSContents(string[] args)
         {
             string logPath = args[0];
@@ -2108,6 +2142,7 @@ namespace Albelli.MiscUtils.CLI
             return 0;
         }
 
+        #region SpecFlow stuff
         public static int GenSpecFlowFeatureStepStubs(string[] args)
         {
             string inputStepsPath = args[0];
@@ -2188,6 +2223,34 @@ namespace Albelli.MiscUtils.CLI
                     return queue[i].Item1;
             }
             return queue[0].Item1;
+        }
+        #endregion SpecFlow
+
+        public static int PicturesXmlVerify(string[] args)
+        {
+            string pictureXmlPath = args[0];
+            bool testSerialize = bool.Parse(TryGetArg(args, 1, "false"));
+            if (testSerialize)
+            {
+                PicturesCollection coll = new();
+                coll.Add(new PictureInfo() { filename = "a.jpg", indexPosition = 0, quantity = 3, name = "a", type = "PICTURE", backprint = "albelli.nl" });
+                Tools.WriteXML(coll, $"{pictureXmlPath}.testSerialize.xml");
+                return 0;
+            }
+            PicturesCollection pictures = Tools.ReadXML<PicturesCollection>(pictureXmlPath);
+            Console.WriteLine($"{pictures.Count} vs {pictures.Select(p => p.indexPosition).Distinct().Count()}");
+            Console.WriteLine($"{pictures.Count} vs {pictures.Select(p => p.filename).Distinct().Count()}");
+            Console.WriteLine($"{pictures.Count} vs {pictures.Select(p => p.name).Distinct().Count()}");
+            return 0;
+        }
+
+        public static int PicturesXmlFix(string[] args)
+        {
+            string pictureXmlPath = args[0];
+            PicturesCollection pictures = Tools.ReadXML<PicturesCollection>(pictureXmlPath);
+            PicturesCollection picturesFixed = new PicturesCollection(pictures.OrderBy(p => int.Parse(p.name)));
+            Tools.WriteXML(picturesFixed, $"{pictureXmlPath}.fixed.xml");
+            return 0;
         }
         #endregion
         #region aux
